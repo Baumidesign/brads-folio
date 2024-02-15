@@ -1,0 +1,156 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+import ContactCTA from "../components/ContactCTA.astro";
+import Hero from "../components/Hero.astro";
+---
+
+<BaseLayout
+  title="About | Bradley Baumann"
+  description="About Bradley Baumann Lorem Ipsum"
+>
+  <div class="stack gap-20">
+    <main class="wrapper about">
+      <Hero
+        title="About"
+        tagline="UX designer and front-end developer focused on building useful products for the web."
+      >
+        <img
+          width="1553"
+          height="873"
+          src="/assets/coworkspace.jpg"
+          alt="Bradley Baumann at work with a colleague"
+        />
+        <p style="color: #888; font-size: 14px; text-align: left;">
+          Co-working spaces are the best
+        </p>
+      </Hero>
+
+      <section>
+        <h2 class="section-title">Welcome</h2>
+        <div class="content">
+          <p>
+            It has been just over a month since relocating back to Australia
+            alongside my wife, and I am now eagerly seeking new opportunities to
+            contribute my expertise to a new team.
+          </p><br />
+          <p>
+            In my most recent role at JW.ORG, I served as a UX Designer,
+            collaborating with a team of 10 to lead the design of organizational
+            web applications and static websites. In this position, I followed a
+            unique Software Development Life Cycle, equipping me to produce
+            high-quality software for a global organization with diverse
+            stakeholders. This is a nonprofit organization with the world’s most
+            widely translated website.
+          </p>
+          <br />
+          <p>
+            With over 9 years of hands-on experience in the web industry and
+            comprehensive knowledge in human-centered design, I bring a unique
+            blend of technical expertise and creative insight to each project.
+          </p>
+          <p>
+            As someone deeply entrenched in the industry, I’ve long understood
+            the necessity of lifelong learning. Continuously staying up-to-date
+            on the latest technologies enables me to offer my clients the best
+            of the modern web, tailored to their needs, all while ensuring
+            cost-effective solutions.
+          </p>
+        </div>
+      </section>
+      <section>
+        <h2 class="section-title">Education</h2>
+        <div class="content">
+          <p>
+            <b>Cape Peninsula University of Technology</b>
+            <br />
+            2013 National Diploma: 3 year course in Multimedia Web Development
+          </p>
+        </div>
+      </section>
+      <section>
+        <h2 class="section-title">Skills</h2>
+        <div class="content">
+          <p>
+            <b>Programming Languages</b>
+            <br />
+            JavaScript, TypeScript, HTML, CSS, PHP
+          </p>
+          <br />
+          <p>
+            <b>Libraries & Frameworks</b>
+            <br />
+            Astro, Nextjs, React, Angular, Tailwind
+          </p>
+          <br />
+          <p>
+            <b>Tools & Platforms</b>
+            <br />
+            Figma, Adobe XD, Photoshop, Git, Netlify, <br />
+            Vercel, WordPress, WebFlow, FlutterFlow
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <ContactCTA />
+  </div>
+</BaseLayout>
+
+<style>
+  .about {
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+  }
+
+  img {
+    margin-top: 1.5rem;
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-md);
+  }
+
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--gray-200);
+  }
+
+  .section-title {
+    grid-column-start: 1;
+    font-size: var(--text-xl);
+    color: var(--gray-0);
+  }
+
+  .content {
+    grid-column: 2 / 4;
+  }
+
+  .content :global(a) {
+    text-decoration: 1px solid underline transparent;
+    text-underline-offset: 0.25em;
+    transition: text-decoration-color var(--theme-transition);
+  }
+
+  .content :global(a:hover),
+  .content :global(a:focus) {
+    text-decoration-color: currentColor;
+  }
+
+  @media (min-width: 50em) {
+    .about {
+      display: grid;
+      grid-template-columns: 1fr 60% 1fr;
+    }
+
+    .about > :global(:first-child) {
+      grid-column-start: 2;
+    }
+
+    section {
+      display: contents;
+      font-size: var(--text-lg);
+    }
+  }
+</style>
