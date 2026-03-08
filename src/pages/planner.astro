@@ -1,0 +1,142 @@
+---
+import { supabase } from '../lib/supabase';
+
+// 1. Setup Dates
+const now = new Date();
+const currentYear = now.getFullYear();
+const currentMonth = now.getMonth(); // 0-indexed (March is 2)
+
+// 2. Service Year Calculation (Sept 1 - Aug 31)
+const isAfterSeptember = currentMonth >= 8; 
+const serviceYearStart = isAfterSeptember ? `${currentYear}-09-01` : `${currentYear - 1}-09-01`;
+const serviceYearEnd = isAfterSeptember ? `${currentYear + 1}-08-31` : `${currentYear}-08-31`;
+
+// 3. Current Month Calculation (for the Goal Bar)
+const startOfMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
+
+// 4. Fetch Data from Supabase
+const { data: logs } = await supabase
+  .from('planner_logs')
+  .select('*')
+  .order('date', { ascending: false });
+
+// 5. Calculations
+const monthlyGoal = 15;
+const monthTotal = logs?.filter(log => log.date >= startOfMonth)
+  .reduce((acc, curr) => acc + (curr.hours || 0), 0) || 0;
+
+const serviceYearTotal = logs?.filter(log => log.date >= serviceYearStart && log.date <= serviceYearEnd)
+  .reduce((acc, curr) => acc + (curr.hours || 0), 0) || 0;
+
+const percentComplete = Math.min((monthTotal / monthlyGoal) * 100, 100);
+---
+
+<html lang="en">
+<head>
+  <title>Baumi Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #09090b; color: #fafafa; font-family: system-ui, -apple-system, sans-serif; padding: 2rem; }
+    .container { max-width: 500px; margin: 0 auto; }
+    
+    .stats-card { 
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); 
+      padding: 1.5rem; 
+      border-radius: 12px; 
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+    .stats-label { font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stats-value { font-size: 2.5rem; font-weight: 800; margin: 0.2rem 0; }
+    
+    .progress-bg { background: rgba(255, 255, 255, 0.2); height: 10px; border-radius: 5px; margin: 12px 0; overflow: hidden; }
+    .progress-fill { background: #4ade80; height: 100%; transition: width 0.5s ease-out; }
+
+    form { display: flex; flex-direction: column; gap: 1rem; background: #18181b; padding: 1.5rem; border-radius: 8px; border: 1px solid #27272a; }
+    input, textarea, button { padding: 0.8rem; border-radius: 6px; border: 1px solid #3f3f46; background: #09090b; color: white; font-size: 1rem; }
+    textarea { resize: vertical; min-height: 80px; }
+    button.save-btn { background: #2563eb; border: none; font-weight: bold; cursor: pointer; }
+    button.save-btn:hover { background: #1d4ed8; }
+    
+    .log-item { border-bottom: 1px solid #27272a; padding: 1rem 0; display: flex; justify-content: space-between; align-items: flex-start; }
+    .log-content { flex-grow: 1; }
+    .log-header { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 0.2rem; }
+    .log-notes { color: #a1a1aa; font-size: 0.9rem; font-style: italic; }
+    .delete-btn { background: none; border: none; color: #71717a; cursor: pointer; font-size: 0.8rem; padding: 0.5rem; }
+    .delete-btn:hover { color: #f87171; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="stats-card">
+      <div class="stats-label">Monthly Progress</div>
+      <div class="stats-value">{monthTotal} <span style="font-size: 1.2rem; opacity: 0.7;">/ {monthlyGoal} hrs</span></div>
+      
+      <div class="progress-bg">
+        <div class="progress-fill" style={`width: ${percentComplete}%`}></div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+        <span class="stats-label">Service Year Total: {serviceYearTotal}</span>
+        <span class="stats-label" style="font-size: 0.65rem;">Sept 1 - Aug 31</span>
+      </div>
+    </div>
+
+    <form id="plannerForm">
+      <input type="date" name="date" required value={new Date().toISOString().split('T')[0]} />
+      <input type="number" name="hours" placeholder="Hours (e.g. 1.5)" min="0" step="0.1" required />
+      <textarea name="notes" placeholder="Notes (Study, return visits, etc.)"></textarea>
+      <button type="submit" class="save-btn">Save Log</button>
+    </form>
+
+    <div style="margin-top: 2.5rem;">
+      <h2 style="font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid #27272a; padding-bottom: 0.5rem;">Recent Activity</h2>
+      {logs?.length === 0 && <p style="color: #71717a;">No hours logged yet.</p>}
+      {logs?.map((log) => (
+        <div class="log-item">
+          <div class="log-content">
+            <div class="log-header">
+              <span>{new Date(log.date).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+              <span>{log.hours} hrs</span>
+            </div>
+            {log.notes && <div class="log-notes">{log.notes}</div>}
+          </div>
+          <button class="delete-btn" data-id={log.id}>Delete</button>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <script>
+    import { supabase } from '../lib/supabase';
+
+    const form = document.getElementById('plannerForm') as HTMLFormElement;
+    
+    // Save Log
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const { error } = await supabase.from('planner_logs').insert([{ 
+        date: formData.get('date'), 
+        hours: parseFloat(formData.get('hours') as string),
+        notes: formData.get('notes')
+      }]);
+      
+      if (error) alert("Error: " + error.message);
+      else location.reload();
+    });
+
+    // Delete Log
+    document.querySelectorAll('.delete-btn').forEach(button => {
+      button.addEventListener('click', async (e) => {
+        if (!confirm("Delete this log?")) return;
+        const id = (e.target as HTMLButtonElement).dataset.id;
+        const { error } = await supabase.from('planner_logs').delete().eq('id', id);
+        
+        if (error) alert("Error: " + error.message);
+        else location.reload();
+      });
+    });
+  </script>
+</body>
+</html>
