@@ -29,7 +29,12 @@
   </div>
 
   <script>
-    import { supabase } from '../lib/supabase';
+    // Client-side Supabase client initialization
+    import { createClient } from '@supabase/supabase-js';
+    const supabase = createClient(
+      import.meta.env.PUBLIC_SUPABASE_URL,
+      import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+    );
 
     const form = document.getElementById('loginForm') as HTMLFormElement;
     const errorMsg = document.getElementById('error-msg') as HTMLDivElement;
