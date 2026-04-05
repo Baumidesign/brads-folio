@@ -1,0 +1,20 @@
+---
+// This component renders a form that sends a POST request to the sign-out endpoint.
+---
+<form action="/api/auth/signout" method="post">
+  <button type="submit" class="signout-button">Sign Out</button>
+</form>
+
+<style>
+  .signout-button {
+    background: #27272a;
+    color: white;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .signout-button:hover { background: #3f3f46; }
+</style>

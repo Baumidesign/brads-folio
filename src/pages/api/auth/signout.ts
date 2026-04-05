@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { supabase } from "../../../lib/supabase"; // Path to your supabase.ts file
 
-export const GET: APIRoute = async ({ cookies, redirect }) => {
+export const POST: APIRoute = async ({ cookies, redirect }) => {
   // 1. Tell Supabase to kill the session globally
   await supabase.auth.signOut();
 

@@ -1,6 +1,6 @@
 ---
 import { supabase } from '../lib/supabase';
-import SignOut from './SignOut.astro';
+import SignOut from '../components/SignOut.astro';
 
 // --- 1. AUTHENTICATION GUARD ---
 const accessToken = Astro.cookies.get('sb-access-token')?.value;
@@ -11,17 +11,35 @@ if (!accessToken || !refreshToken) {
 }
 
 // Authenticate the Supabase client for this server-side request
-const { data: { user }, error: authError } = await supabase.auth.setSession({
+const { data, error: authError } = await supabase.auth.setSession({
   access_token: accessToken,
   refresh_token: refreshToken,
 });
 
-if (authError || !user) {
+if (authError || !data.user) {
   Astro.cookies.delete('sb-access-token', { path: '/' });
   Astro.cookies.delete('sb-refresh-token', { path: '/' });
   return Astro.redirect('/login');
 }
 
+const { user } = data;
+
+// If the session was refreshed, update the cookies to keep the user logged in
+if (data.session) {
+  const { access_token, refresh_token, expires_in } = data.session;
+  Astro.cookies.set('sb-access-token', access_token, {
+    path: '/',
+    maxAge: Math.round(expires_in),
+    sameSite: 'lax',
+    secure: import.meta.env.PROD,
+  });
+  Astro.cookies.set('sb-refresh-token', refresh_token, {
+    path: '/',
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+    sameSite: 'lax',
+    secure: import.meta.env.PROD,
+  });
+}
 // --- 2. CALENDAR & NAVIGATION LOGIC ---
 const urlMonth = Astro.url.searchParams.get('month');
 const urlYear = Astro.url.searchParams.get('year');
