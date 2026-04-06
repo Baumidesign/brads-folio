@@ -10,11 +10,21 @@ if (!accessToken || !refreshToken) {
   return Astro.redirect('/login');
 }
 
-// Authenticate the Supabase client for this server-side request
-const { data, error: authError } = await supabase.auth.setSession({
-  access_token: accessToken,
-  refresh_token: refreshToken,
-});
+let data, authError;
+try {
+  // Authenticate the Supabase client for this server-side request
+  ({ data, error: authError } = await supabase.auth.setSession({
+    access_token: accessToken,
+    refresh_token: refreshToken,
+  }));
+} catch (e) {
+  console.error('PLANNER_PAGE_SUPABASE_ERROR:', e);
+  // This error is likely due to server misconfiguration (missing env vars).
+  // Clear cookies and redirect to login to prevent a redirect loop.
+  Astro.cookies.delete('sb-access-token', { path: '/' });
+  Astro.cookies.delete('sb-refresh-token', { path: '/' });
+  return Astro.redirect('/login?error=Server configuration error.');
+}
 
 if (authError || !data.user) {
   Astro.cookies.delete('sb-access-token', { path: '/' });
@@ -214,6 +224,7 @@ viewedMonthLogs?.forEach(log => {
   </style>
 </head>
 <body
+  data-access-token={accessToken}
   data-logs={JSON.stringify(viewedMonthLogs || [])}
   data-default-date={defaultDate}
   data-current-year={currentYear}
@@ -339,9 +350,21 @@ viewedMonthLogs?.forEach(log => {
   <script>
     // Client-side Supabase client initialization
     import { createClient } from '@supabase/supabase-js';
+    
+    // 1. Grab the VIP pass (token) we attached to the body
+    const accessToken = document.body.dataset.accessToken;
+    
+    // 2. Give it to the Supabase client
     const supabase = createClient(
       import.meta.env.PUBLIC_SUPABASE_URL,
-      import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+      import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+      }
     );
     
     // --- TYPES ---
