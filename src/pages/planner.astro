@@ -107,6 +107,7 @@ viewedMonthLogs?.forEach(log => {
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Personal Planner</title>
   <style>
     body { background: #09090b; color: #fafafa; font-family: system-ui, -apple-system, sans-serif; padding: 1rem; margin: 0; }
@@ -250,9 +251,33 @@ viewedMonthLogs?.forEach(log => {
         min-height: 60px; /* Slightly smaller day boxes */
       }
       .log-item {
+        /* Transform list items into cards on mobile */
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+        padding: 1rem;
+        border-radius: 8px;
+        background: #18181b;
+        border-bottom: none; /* Remove the desktop line separator */
+      }
+      /* Add space between the new log item cards */
+      #logListContainer {
+        display: flex;
         flex-direction: column;
         gap: 0.75rem;
-        align-items: flex-start;
+      }
+      .log-item-header {
+        font-size: 1rem; /* Increase font size for readability */
+      }
+      .action-group {
+        width: 100%; /* Make buttons take full width */
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .btn-edit, .btn-delete {
+        padding: 0.8rem; /* Larger touch targets */
+        text-align: center;
+        font-weight: bold;
       }
       .modal-content {
         width: 90%;
