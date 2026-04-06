@@ -221,6 +221,49 @@ viewedMonthLogs?.forEach(log => {
         transform: translateY(20px);
       }
     }
+
+    /* --- MOBILE RESPONSIVENESS --- */
+    @media (max-width: 640px) {
+      body {
+        padding: 0.5rem; /* Reduce body padding on small screens */
+      }
+      .container {
+        padding: 0 0.5rem; /* Add horizontal padding to the main container */
+      }
+      .month-nav {
+        gap: 0.5rem;
+      }
+      .month-nav h2 {
+        font-size: 1.1rem;
+        text-align: center;
+      }
+      .month-nav button {
+        padding: 0.5rem 0.75rem;
+      }
+      .stat-card {
+        padding: 1rem;
+      }
+      .stat-value {
+        font-size: 2rem;
+      }
+      .day-box {
+        min-height: 60px; /* Slightly smaller day boxes */
+      }
+      .log-item {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+      }
+      .modal-content {
+        width: 90%;
+        padding: 1.5rem;
+      }
+      /* Stack form buttons for better touch targets */
+      #plannerForm div:has(> #submitBtn) {
+        flex-direction: column-reverse;
+        gap: 0.5rem;
+      }
+    }
   </style>
 </head>
 <body
