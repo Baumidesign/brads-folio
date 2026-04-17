@@ -128,9 +128,13 @@ viewedMonthLogs?.forEach(log => {
     .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: bold; font-size: 0.75rem; color: #71717a; margin-bottom: 5px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: #27272a; border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
     .day-box { background: #18181b; min-height: 70px; padding: 5px; cursor: pointer; transition: 0.2s; }
+    .day-number { font-size: 0.75rem; color: #71717a; }
     .day-box:hover { background: #27272a; }
-    .hours-actual { background: #2563eb; color: white; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; font-weight: bold; }
-    .hours-planned { border: 1px dashed #60a5fa; color: #60a5fa; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; }
+    /* These classes are applied to elements created in client-side JS.
+       Using :global() prevents Astro from scoping them with a data-astro-cid attribute,
+       ensuring the styles apply to our dynamically generated divs. */
+    :global(.hours-actual) { background: #2563eb; color: white; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; font-weight: bold; }
+    :global(.hours-planned) { border: 1px dashed #60a5fa; color: #60a5fa; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; }
     
     form { display: flex; flex-direction: column; gap: 10px; background: #18181b; padding: 1.5rem; border-radius: 8px; border: 1px solid #27272a; }
     input, textarea, button.form-btn { padding: 0.8rem; border-radius: 6px; border: 1px solid #3f3f46; background: #09090b; color: white; font-family: inherit; }
@@ -336,7 +340,7 @@ viewedMonthLogs?.forEach(log => {
         const data = hoursByDay[day];
         return (
           <div class="day-box" data-day={day} onclick={`document.getElementById('dateInput').value='${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}'`}>
-            <span style="font-size: 0.75rem; color: #71717a;">{day}</span>
+            <span class="day-number">{day}</span>
             {data?.actual > 0 && <div class="hours-actual">{data.actual}h</div>}
             {data?.planned > 0 && <div class="hours-planned">P: {data.planned}h</div>}
           </div>
@@ -570,22 +574,39 @@ viewedMonthLogs?.forEach(log => {
 
         calendarGrid.querySelectorAll('.day-box[data-day]').forEach(dayBox => {
           const day = parseInt((dayBox as HTMLElement).dataset.day!, 10);
-          const data = hoursByDay[day];
-          
-          dayBox.querySelector('.hours-actual')?.remove();
-          dayBox.querySelector('.hours-planned')?.remove();
+          const data = hoursByDay[day] || { actual: 0, planned: 0 }; // Ensure data exists for the day
 
-          if (data?.actual > 0) {
-            const el = document.createElement('div');
-            el.className = 'hours-actual';
-            el.textContent = `${data.actual}h`;
-            dayBox.appendChild(el);
+          // Find the day number span, which should always be the first child and remains untouched.
+          const dayNumberSpan = dayBox.querySelector('.day-number') as HTMLSpanElement;
+          if (!dayNumberSpan) {
+            console.warn(`Day number span not found for dayBox with data-day="${day}". Skipping update.`);
+            return; // Essential element missing, skip this dayBox.
           }
-          if (data?.planned > 0) {
-            const el = document.createElement('div');
-            el.className = 'hours-planned';
-            el.textContent = `P: ${data.planned}h`;
-            dayBox.appendChild(el);
+
+          // Remove all existing hour display elements to ensure a clean slate and correct order.
+          dayBox.querySelectorAll('.hours-actual, .hours-planned').forEach(el => el.remove());
+
+          // Keep track of the last element inserted to maintain order.
+          let lastInsertedElement: HTMLElement = dayNumberSpan;
+
+          // Re-insert Actual Hours if present
+          if (data.actual > 0) {
+            const actualEl = document.createElement('div');
+            actualEl.className = 'hours-actual';
+            actualEl.textContent = `${data.actual}h`;
+            // Insert the actual hours div right after the last inserted element (initially the day number span).
+            lastInsertedElement.after(actualEl);
+            lastInsertedElement = actualEl; // Update last inserted element for the next insertion.
+          }
+
+          // Re-insert Planned Hours if present
+          if (data.planned > 0) {
+            const plannedEl = document.createElement('div');
+            plannedEl.className = 'hours-planned';
+            plannedEl.textContent = `P: ${data.planned}h`;
+            // Insert the planned hours div right after the last inserted element (either day number or actual hours).
+            lastInsertedElement.after(plannedEl);
+            // No need to update lastInsertedElement if planned is always the last possible element.
           }
         });
       }
