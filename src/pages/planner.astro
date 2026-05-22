@@ -136,11 +136,9 @@ viewedMonthLogs?.forEach(log => {
     :global(.hours-actual) { background: #2563eb; color: white; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; font-weight: bold; }
     :global(.hours-planned) { border: 1px dashed #60a5fa; color: #60a5fa; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; }
     
-    form { display: flex; flex-direction: column; gap: 10px; background: #18181b; padding: 1.5rem; border-radius: 8px; border: 1px solid #27272a; }
     input, textarea, button.form-btn { padding: 0.8rem; border-radius: 6px; border: 1px solid #3f3f46; background: #09090b; color: white; font-family: inherit; }
     .btn-primary { background: #2563eb; border: none; font-weight: bold; cursor: pointer; color: white; }
     .btn-primary:hover { background: #1d4ed8; }
-    .btn-cancel { background: #3f3f46; border: none; font-weight: bold; cursor: pointer; display: none; color: white; }
 
     .log-item { border-bottom: 1px solid #27272a; padding: 1rem 0; display: flex; justify-content: space-between; align-items: flex-start; }
     .modal-overlay {
@@ -189,7 +187,7 @@ viewedMonthLogs?.forEach(log => {
 
     .toast-container {
       position: fixed;
-      bottom: 1.5rem;
+      bottom: 5rem;
       right: 1.5rem;
       z-index: 2000;
       display: flex;
@@ -287,11 +285,108 @@ viewedMonthLogs?.forEach(log => {
         width: 90%;
         padding: 1.5rem;
       }
-      /* Stack form buttons for better touch targets */
-      #plannerForm div:has(> #submitBtn) {
-        flex-direction: column-reverse;
-        gap: 0.5rem;
-      }
+    }
+
+    /* FAB */
+    .fab {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: white;
+      border: none;
+      font-size: 1.75rem;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.5);
+      transition: background 0.2s;
+    }
+    .fab:hover { background: #1d4ed8; }
+
+    /* Entry Modal (Bottom Sheet) */
+    .entry-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 9, 11, 0.75);
+      z-index: 200;
+      display: none;
+      backdrop-filter: blur(2px);
+    }
+    .entry-modal-overlay.open { display: block; }
+
+    .entry-modal {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #18181b;
+      border-top: 1px solid #3f3f46;
+      border-radius: 16px 16px 0 0;
+      padding: 1.5rem;
+      z-index: 201;
+      transform: translateY(100%);
+      transition: transform 0.3s ease-out;
+    }
+    .entry-modal.open { transform: translateY(0); }
+
+    .entry-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: #71717a;
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.25rem;
+    }
+    .modal-close-btn:hover { color: #fafafa; }
+
+    .hour-stepper {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #09090b;
+      border: 1px solid #3f3f46;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+    }
+    .stepper-btn {
+      background: #27272a;
+      border: none;
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      font-size: 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .stepper-btn:hover { background: #3f3f46; }
+    .stepper-value {
+      flex: 1;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .modal-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
     }
   </style>
 </head>
@@ -339,7 +434,7 @@ viewedMonthLogs?.forEach(log => {
         const day = i + 1;
         const data = hoursByDay[day];
         return (
-          <div class="day-box" data-day={day} onclick={`document.getElementById('dateInput').value='${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}'`}>
+          <div class="day-box" data-day={day} onclick={`selectDate('${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}')`}>
             <span class="day-number">{day}</span>
             {data?.actual > 0 && <div class="hours-actual">{data.actual}h</div>}
             {data?.planned > 0 && <div class="hours-planned">P: {data.planned}h</div>}
@@ -347,23 +442,6 @@ viewedMonthLogs?.forEach(log => {
         )
       })}
     </div>
-
-    <form id="plannerForm">
-      <input type="hidden" id="logId" name="id" />
-      <div style="display: flex; gap: 10px;">
-        <input type="date" id="dateInput" name="date" class="form-btn" required value={defaultDate} style="flex: 2;" />
-        <input type="number" id="hoursInput" name="hours" class="form-btn" placeholder="Hrs" step="0.1" required style="flex: 1;" />
-      </div>
-      <textarea id="notesInput" name="notes" class="form-btn" placeholder="Notes..."></textarea>
-      <div style="display: flex; gap: 10px; align-items: center; padding: 0.5rem 0;">
-        <input type="checkbox" id="planToggle" name="is_planned" />
-        <label for="planToggle">Mark as Planned</label>
-      </div>
-      <div style="display: flex; gap: 10px;">
-        <button type="submit" id="submitBtn" class="form-btn btn-primary" style="flex: 1;">Save Log</button>
-        <button type="button" id="cancelBtn" class="form-btn btn-cancel">Cancel Edit</button>
-      </div>
-    </form>
 
     <div style="margin-top: 2rem;">
       <h3>Entries for {monthName}</h3>
@@ -419,14 +497,40 @@ viewedMonthLogs?.forEach(log => {
     </div>
   </div>
 
+  <button id="fab" class="fab" type="button">+</button>
+
+  <div id="entryModalOverlay" class="entry-modal-overlay"></div>
+  <div id="entryModal" class="entry-modal">
+    <div class="entry-modal-header">
+      <h3 id="modalDateLabel" style="margin: 0; font-size: 1.1rem; font-weight: bold;"></h3>
+      <button type="button" id="modalCloseBtn" class="modal-close-btn">&#x2715;</button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div>
+        <div style="font-size: 0.8rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Hours</div>
+        <div class="hour-stepper">
+          <button type="button" id="stepperMinus" class="stepper-btn">&#x2212;</button>
+          <div id="stepperValue" class="stepper-value">0h</div>
+          <button type="button" id="stepperPlus" class="stepper-btn">+</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 0.8rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Notes</div>
+        <textarea id="modalNotes" class="form-btn" placeholder="Notes..." style="width: 100%; box-sizing: border-box; min-height: 80px; resize: vertical;"></textarea>
+      </div>
+      <div class="modal-toggle-row">
+        <input type="checkbox" id="modalPlanned" />
+        <label for="modalPlanned">Mark as Planned</label>
+      </div>
+      <button type="button" id="modalSaveBtn" class="form-btn btn-primary">Save Log</button>
+    </div>
+  </div>
+
   <script>
-    // Client-side Supabase client initialization
     import { createClient } from '@supabase/supabase-js';
-    
-    // 1. Grab the VIP pass (token) we attached to the body
+
     const accessToken = document.body.dataset.accessToken;
-    
-    // 2. Give it to the Supabase client
+
     const supabase = createClient(
       import.meta.env.PUBLIC_SUPABASE_URL,
       import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
@@ -438,8 +542,7 @@ viewedMonthLogs?.forEach(log => {
         }
       }
     );
-    
-    // --- TYPES ---
+
     interface PlannerLog {
       id: string;
       date: string;
@@ -450,16 +553,18 @@ viewedMonthLogs?.forEach(log => {
 
     document.addEventListener('DOMContentLoaded', () => {
       const body = document.body;
+
       // --- STATE ---
       let logs: PlannerLog[] = JSON.parse(body.dataset.logs || '[]');
-      const defaultDate = body.dataset.defaultDate;
+      const defaultDate = body.dataset.defaultDate || '';
       const currentYear = parseInt(body.dataset.currentYear!, 10);
       const currentMonth = parseInt(body.dataset.currentMonth!, 10);
       let logIdToDelete: string | null = null;
+      let selectedDate: string = defaultDate;
+      let editingLogId: string | null = null;
+      let modalHours: number = 0;
+
       // --- DOM ELEMENTS ---
-      const form = document.getElementById('plannerForm') as HTMLFormElement;
-      const submitBtn = document.getElementById('submitBtn') as HTMLButtonElement;
-      const cancelBtn = document.getElementById('cancelBtn') as HTMLButtonElement;
       const deleteModal = document.getElementById('deleteModal') as HTMLDivElement;
       const cancelDeleteBtn = document.getElementById('cancelDeleteBtn') as HTMLButtonElement;
       const confirmDeleteBtn = document.getElementById('confirmDeleteBtn') as HTMLButtonElement;
@@ -468,72 +573,65 @@ viewedMonthLogs?.forEach(log => {
       const monthPlannedValue = document.getElementById('monthPlannedValue') as HTMLDivElement;
       const calendarGrid = document.getElementById('calendarGrid') as HTMLDivElement;
       const toastContainer = document.getElementById('toast-container') as HTMLDivElement;
+      const fab = document.getElementById('fab') as HTMLButtonElement;
+      const entryModalOverlay = document.getElementById('entryModalOverlay') as HTMLDivElement;
+      const entryModal = document.getElementById('entryModal') as HTMLDivElement;
+      const modalDateLabel = document.getElementById('modalDateLabel') as HTMLElement;
+      const modalCloseBtn = document.getElementById('modalCloseBtn') as HTMLButtonElement;
+      const stepperMinus = document.getElementById('stepperMinus') as HTMLButtonElement;
+      const stepperPlus = document.getElementById('stepperPlus') as HTMLButtonElement;
+      const stepperValue = document.getElementById('stepperValue') as HTMLDivElement;
+      const modalNotes = document.getElementById('modalNotes') as HTMLTextAreaElement;
+      const modalPlanned = document.getElementById('modalPlanned') as HTMLInputElement;
+      const modalSaveBtn = document.getElementById('modalSaveBtn') as HTMLButtonElement;
 
-      if (!form || !logListContainer || !cancelBtn || !deleteModal) {
+      if (!logListContainer || !deleteModal) {
         console.error("Essential planner elements could not be found in the DOM. The script will not run.");
         return;
       }
 
-      // --- RENDER FUNCTIONS ---
+      // --- TOAST ---
       function showToast(message: string, type: 'success' | 'error' = 'success') {
         if (!toastContainer) return;
         const toast = document.createElement('div');
         toast.classList.add('toast', type);
         toast.textContent = message;
         toastContainer.appendChild(toast);
-
-        const FADE_DURATION_MS = 400; // Must match the 'toast-out' animation duration
+        const FADE_DURATION_MS = 400;
         const VISIBLE_DURATION_MS = 2000;
-
         setTimeout(() => {
           toast.classList.add('fade-out');
-          setTimeout(() => {
-            toast.remove();
-          }, FADE_DURATION_MS);
+          setTimeout(() => toast.remove(), FADE_DURATION_MS);
         }, VISIBLE_DURATION_MS);
       }
 
+      // --- LOG LIST RENDERING ---
       function createLogElement(log: PlannerLog) {
         const template = document.getElementById('log-item-template') as HTMLTemplateElement;
         if (!template) {
           console.error('The log item template was not found.');
-          return document.createElement('div'); // Failsafe
+          return document.createElement('div');
         }
-
         const clone = template.content.cloneNode(true) as DocumentFragment;
         const logItem = clone.querySelector('.log-item') as HTMLDivElement;
         logItem.dataset.logId = log.id;
-
-        // Populate data
-        // The date from DB is YYYY-MM-DD. new Date() will parse this as UTC, which is consistent with server-side rendering.
         (clone.querySelector('.log-item-date') as HTMLElement).textContent = new Date(log.date).toLocaleDateString('en-AU', {
           timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short'
         });
         (clone.querySelector('.log-item-hours') as HTMLElement).textContent = `${log.hours || 0} hrs`;
-
-        if (!log.is_planned) {
-          clone.querySelector('.log-badge.planned')?.remove();
-        }
-
+        if (!log.is_planned) clone.querySelector('.log-badge.planned')?.remove();
         if (log.notes) {
           (clone.querySelector('.log-item-notes') as HTMLElement).textContent = log.notes;
         } else {
           clone.querySelector('.log-item-notes')?.remove();
         }
-
-        // Buttons
         const editBtn = clone.querySelector('.btn-edit') as HTMLButtonElement;
         Object.assign(editBtn.dataset, {
-          id: log.id,
-          date: log.date,
-          hours: String(log.hours),
-          planned: String(log.is_planned),
-          notes: log.notes || '',
+          id: log.id, date: log.date, hours: String(log.hours),
+          planned: String(log.is_planned), notes: log.notes || '',
         });
-
         const deleteBtn = clone.querySelector('.btn-delete') as HTMLButtonElement;
         deleteBtn.dataset.id = log.id;
-
         return logItem;
       }
 
@@ -544,81 +642,137 @@ viewedMonthLogs?.forEach(log => {
           return;
         }
         const sortedLogs = [...logs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        sortedLogs.forEach(log => {
-          const logElement = createLogElement(log);
-          logListContainer.appendChild(logElement);
-        });
+        sortedLogs.forEach(log => logListContainer.appendChild(createLogElement(log)));
       }
 
       function updateDashboardAndCalendar() {
         const hoursByDay: Record<number, { actual: number, planned: number }> = {};
         let monthActual = 0;
         let monthPlanned = 0;
-
         logs.forEach(log => {
           const day = parseInt(log.date.split('-')[2], 10);
           if (!hoursByDay[day]) hoursByDay[day] = { actual: 0, planned: 0 };
-          
           const hours = log.hours || 0;
-          if (log.is_planned) {
-            hoursByDay[day].planned += hours;
-            monthPlanned += hours;
-          } else {
-            hoursByDay[day].actual += hours;
-            monthActual += hours;
-          }
+          if (log.is_planned) { hoursByDay[day].planned += hours; monthPlanned += hours; }
+          else { hoursByDay[day].actual += hours; monthActual += hours; }
         });
-
         monthActualValue.textContent = String(monthActual);
         monthPlannedValue.textContent = String(monthPlanned);
-
         calendarGrid.querySelectorAll('.day-box[data-day]').forEach(dayBox => {
           const day = parseInt((dayBox as HTMLElement).dataset.day!, 10);
-          const data = hoursByDay[day] || { actual: 0, planned: 0 }; // Ensure data exists for the day
-
-          // Find the day number span, which should always be the first child and remains untouched.
+          const data = hoursByDay[day] || { actual: 0, planned: 0 };
           const dayNumberSpan = dayBox.querySelector('.day-number') as HTMLSpanElement;
-          if (!dayNumberSpan) {
-            console.warn(`Day number span not found for dayBox with data-day="${day}". Skipping update.`);
-            return; // Essential element missing, skip this dayBox.
-          }
-
-          // Remove all existing hour display elements to ensure a clean slate and correct order.
+          if (!dayNumberSpan) return;
           dayBox.querySelectorAll('.hours-actual, .hours-planned').forEach(el => el.remove());
-
-          // Keep track of the last element inserted to maintain order.
           let lastInsertedElement: HTMLElement = dayNumberSpan;
-
-          // Re-insert Actual Hours if present
           if (data.actual > 0) {
             const actualEl = document.createElement('div');
             actualEl.className = 'hours-actual';
             actualEl.textContent = `${data.actual}h`;
-            // Insert the actual hours div right after the last inserted element (initially the day number span).
             lastInsertedElement.after(actualEl);
-            lastInsertedElement = actualEl; // Update last inserted element for the next insertion.
+            lastInsertedElement = actualEl;
           }
-
-          // Re-insert Planned Hours if present
           if (data.planned > 0) {
             const plannedEl = document.createElement('div');
             plannedEl.className = 'hours-planned';
             plannedEl.textContent = `P: ${data.planned}h`;
-            // Insert the planned hours div right after the last inserted element (either day number or actual hours).
             lastInsertedElement.after(plannedEl);
-            // No need to update lastInsertedElement if planned is always the last possible element.
           }
         });
       }
 
-      // --- Cancel Edit Logic ---
-      cancelBtn.addEventListener('click', () => {
-        form.reset();
-        (document.getElementById('logId') as HTMLInputElement).value = '';
-        submitBtn.innerText = "Save Log";
-        cancelBtn.style.display = "none";
-        // Set default date on reset (variable passed from server)
-        (document.getElementById('dateInput') as HTMLInputElement).value = defaultDate || '';
+      // --- FAB & ENTRY MODAL ---
+      function updateStepperDisplay() {
+        stepperValue.textContent = `${modalHours}h`;
+      }
+
+      function openEntryModal(dateStr: string) {
+        selectedDate = dateStr;
+        editingLogId = null;
+        modalHours = 0;
+        modalNotes.value = '';
+        modalPlanned.checked = false;
+
+        const existing = logs.find(log => log.date === dateStr);
+        if (existing) {
+          editingLogId = existing.id;
+          modalHours = existing.hours || 0;
+          modalNotes.value = existing.notes || '';
+          modalPlanned.checked = existing.is_planned;
+        }
+
+        modalDateLabel.textContent = new Date(dateStr).toLocaleDateString('en-AU', {
+          timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'long', year: 'numeric'
+        });
+        updateStepperDisplay();
+        entryModalOverlay.classList.add('open');
+        entryModal.classList.add('open');
+      }
+
+      function closeEntryModal() {
+        entryModalOverlay.classList.remove('open');
+        entryModal.classList.remove('open');
+        editingLogId = null;
+        modalHours = 0;
+      }
+
+      // Expose selectDate globally for inline onclick handlers on day boxes
+      (window as any).selectDate = function(dateStr: string) {
+        selectedDate = dateStr;
+      };
+
+      fab.addEventListener('click', () => openEntryModal(selectedDate));
+
+      stepperMinus.addEventListener('click', () => {
+        if (modalHours > 0) {
+          modalHours = Math.round((modalHours - 0.5) * 10) / 10;
+          updateStepperDisplay();
+        }
+      });
+      stepperPlus.addEventListener('click', () => {
+        modalHours = Math.round((modalHours + 0.5) * 10) / 10;
+        updateStepperDisplay();
+      });
+
+      entryModalOverlay.addEventListener('click', closeEntryModal);
+      modalCloseBtn.addEventListener('click', closeEntryModal);
+
+      modalSaveBtn.addEventListener('click', async () => {
+        const currentEditingLogId = editingLogId;
+        const payload = {
+          date: selectedDate,
+          hours: modalHours,
+          notes: modalNotes.value,
+          is_planned: modalPlanned.checked,
+        };
+
+        let result;
+        if (currentEditingLogId) {
+          result = await supabase.from('planner_logs').update(payload).eq('id', currentEditingLogId).select().single();
+        } else {
+          result = await supabase.from('planner_logs').insert(payload).select().single();
+        }
+
+        const { data: newOrUpdatedLog, error } = result;
+        if (error) {
+          showToast(`Error: ${error.message}`, 'error');
+        } else if (newOrUpdatedLog) {
+          const isDifferentMonth = !newOrUpdatedLog.date.startsWith(`${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`);
+          if (isDifferentMonth) {
+            location.reload();
+          } else {
+            if (currentEditingLogId) {
+              const index = logs.findIndex(log => log.id === currentEditingLogId);
+              if (index !== -1) logs[index] = newOrUpdatedLog;
+            } else {
+              logs.push(newOrUpdatedLog);
+            }
+            showToast(currentEditingLogId ? 'Log updated successfully.' : 'Log saved successfully.');
+            renderLogList();
+            updateDashboardAndCalendar();
+            closeEntryModal();
+          }
+        }
       });
 
       // --- EVENT DELEGATION for Edit/Delete ---
@@ -626,94 +780,32 @@ viewedMonthLogs?.forEach(log => {
         const target = e.target as HTMLElement;
         const editBtn = target.closest('.btn-edit') as HTMLButtonElement;
         const deleteBtn = target.closest('.btn-delete') as HTMLButtonElement;
-
-        if (editBtn) {
-          (document.getElementById('logId') as HTMLInputElement).value = editBtn.dataset.id || '';
-          (document.getElementById('dateInput') as HTMLInputElement).value = editBtn.dataset.date || '';
-          (document.getElementById('hoursInput') as HTMLInputElement).value = editBtn.dataset.hours || '';
-          (document.getElementById('notesInput') as HTMLTextAreaElement).value = editBtn.dataset.notes || '';
-          (document.getElementById('planToggle') as HTMLInputElement).checked = editBtn.dataset.planned === 'true';
-          submitBtn.innerText = "Update Log";
-          cancelBtn.style.display = "block";
-          form.scrollIntoView({ behavior: 'smooth' });
-        }
-
+        if (editBtn) openEntryModal(editBtn.dataset.date || '');
         if (deleteBtn) {
           logIdToDelete = deleteBtn.dataset.id || null;
-          if (logIdToDelete) {
-            deleteModal.style.display = 'flex';
-          }
+          if (logIdToDelete) deleteModal.style.display = 'flex';
         }
       });
 
-      // --- MODAL LOGIC ---
-      function closeModal() {
+      // --- DELETE MODAL ---
+      function closeDeleteModal() {
         deleteModal.style.display = 'none';
         logIdToDelete = null;
       }
-      cancelDeleteBtn.addEventListener('click', closeModal);
-      deleteModal.addEventListener('click', (e) => { if (e.target === deleteModal) closeModal(); });
-
+      cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+      deleteModal.addEventListener('click', (e) => { if (e.target === deleteModal) closeDeleteModal(); });
       confirmDeleteBtn.addEventListener('click', async () => {
         if (!logIdToDelete) return;
-
         const { error } = await supabase.from('planner_logs').delete().eq('id', logIdToDelete);
         if (error) {
-        showToast("Error: " + error.message, 'error');
+          showToast("Error: " + error.message, 'error');
         } else {
-        showToast('Log entry deleted successfully.');
+          showToast('Log entry deleted successfully.');
           logs = logs.filter(log => log.id !== logIdToDelete);
           renderLogList();
           updateDashboardAndCalendar();
         }
-        closeModal();
-      });
-
-      // --- SAVE/UPDATE LOGIC ---
-      form?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-        const id = formData.get('id');
-        
-        const payload = { 
-          date: formData.get('date') as string,
-          // Ensure we don't send NaN to the database if the input is empty
-          hours: parseFloat(formData.get('hours') as string) || 0,
-          notes: formData.get('notes') as string,
-          is_planned: formData.get('is_planned') === 'on'
-        };
-
-        let result;
-        if (id) {
-          result = await supabase.from('planner_logs').update(payload).eq('id', id).select().single();
-        } else {
-          result = await supabase.from('planner_logs').insert(payload).select().single();
-        }
-
-        const { data: newOrUpdatedLog, error } = result;
-
-        if (error) {
-          showToast(`Error: ${error.message}`, 'error');
-        } else if (newOrUpdatedLog) {
-          const isDifferentMonth = !newOrUpdatedLog.date.startsWith(`${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`);
-          const isUpdate = !!id;
-
-          if (isDifferentMonth) {
-            // If the log was moved to a different month, a reload is the simplest way to handle it
-            location.reload();
-          } else {
-            if (id) { // Update
-              const index = logs.findIndex(log => log.id === id);
-              if (index !== -1) logs[index] = newOrUpdatedLog;
-            } else { // Create
-              logs.push(newOrUpdatedLog);
-            }
-            showToast(isUpdate ? 'Log updated successfully.' : 'Log saved successfully.');
-            renderLogList();
-            updateDashboardAndCalendar();
-            cancelBtn.click(); // Resets the form and button text
-          }
-        }
+        closeDeleteModal();
       });
     });
   </script>
