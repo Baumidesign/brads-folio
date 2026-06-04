@@ -12,8 +12,13 @@
   "dependencies": {
     "@astrojs/netlify": "^6.2.0",
     "@astrojs/node": "^9.5.4",
+    "@astrojs/react": "^5.0.7",
     "@supabase/supabase-js": "^2.98.0",
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3",
     "astro": "^5.18.0",
-    "fast-glob": "^3.3.3"
+    "fast-glob": "^3.3.3",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   }
 }

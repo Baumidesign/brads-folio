@@ -1,6 +1,7 @@
 ---
 import { supabase } from '../lib/supabase';
 import SignOut from '../components/SignOut.astro';
+import BottomNav from '../components/BottomNav.astro';
 
 // --- 1. AUTHENTICATION GUARD ---
 const accessToken = Astro.cookies.get('sb-access-token')?.value;
@@ -110,7 +111,7 @@ viewedMonthLogs?.forEach(log => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Personal Planner</title>
   <style>
-    body { background: #09090b; color: #fafafa; font-family: system-ui, -apple-system, sans-serif; padding: 1rem; margin: 0; }
+    body { background: #09090b; color: #fafafa; font-family: system-ui, -apple-system, sans-serif; padding: 1rem; padding-bottom: 6rem; margin: 0; }
     .header-bar { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
     .container { max-width: 950px; margin: 0 auto; }
     
@@ -290,7 +291,7 @@ viewedMonthLogs?.forEach(log => {
     /* FAB */
     .fab {
       position: fixed;
-      bottom: 1.5rem;
+      bottom: 6rem;
       right: 1.5rem;
       width: 56px;
       height: 56px;
@@ -498,6 +499,8 @@ viewedMonthLogs?.forEach(log => {
   </div>
 
   <button id="fab" class="fab" type="button">+</button>
+
+  <BottomNav />
 
   <div id="entryModalOverlay" class="entry-modal-overlay"></div>
   <div id="entryModal" class="entry-modal">

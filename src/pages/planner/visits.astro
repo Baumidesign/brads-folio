@@ -1,0 +1,83 @@
+---
+import { supabase } from '../../lib/supabase';
+import BottomNav from '../../components/BottomNav.astro';
+import { VisitsScreen } from '../../components/visits/VisitsScreen';
+
+// --- 1. AUTHENTICATION GUARD ---
+const accessToken  = Astro.cookies.get('sb-access-token')?.value;
+const refreshToken = Astro.cookies.get('sb-refresh-token')?.value;
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect('/login');
+}
+
+let data, authError;
+try {
+  ({ data, error: authError } = await supabase.auth.setSession({
+    access_token:  accessToken,
+    refresh_token: refreshToken,
+  }));
+} catch (e) {
+  console.error('VISITS_PAGE_SUPABASE_ERROR:', e);
+  Astro.cookies.delete('sb-access-token', { path: '/' });
+  Astro.cookies.delete('sb-refresh-token', { path: '/' });
+  return Astro.redirect('/login?error=Server configuration error.');
+}
+
+if (authError || !data.user) {
+  Astro.cookies.delete('sb-access-token', { path: '/' });
+  Astro.cookies.delete('sb-refresh-token', { path: '/' });
+  return Astro.redirect('/login');
+}
+
+const { user } = data;
+
+if (data.session) {
+  const { access_token, refresh_token, expires_in } = data.session;
+  Astro.cookies.set('sb-access-token', access_token, {
+    path: '/', maxAge: Math.round(expires_in), sameSite: 'lax', secure: import.meta.env.PROD,
+  });
+  Astro.cookies.set('sb-refresh-token', refresh_token, {
+    path: '/', maxAge: 60 * 60 * 24 * 30, sameSite: 'lax', secure: import.meta.env.PROD,
+  });
+}
+
+// --- 2. DATA FETCH ---
+const { data: people, error: fetchError } = await supabase
+  .from('people_with_last_visit')
+  .select('*')
+  .order('interest',        { ascending: false })
+  .order('last_visit_date', { ascending: false, nullsFirst: false });
+
+if (fetchError) {
+  console.error('VISITS_FETCH_ERROR:', fetchError);
+}
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visits</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    body {
+      background: #000000;
+      color: #ffffff;
+      font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+      min-height: 100vh;
+      padding-top: 16px;
+      padding-bottom: 96px;
+    }
+  </style>
+</head>
+<body>
+  <VisitsScreen
+    client:load
+    people={people ?? []}
+    userId={user.id}
+    accessToken={accessToken}
+  />
+  <BottomNav />
+</body>
+</html>

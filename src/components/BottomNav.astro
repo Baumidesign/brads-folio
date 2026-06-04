@@ -1,0 +1,65 @@
+---
+const path = Astro.url.pathname;
+
+const tabs = [
+  {
+    href:  '/planner',
+    label: 'Calendar',
+    active: path === '/planner',
+    icon: `<path d="M4 8h16M4 8a2 2 0 012-2h12a2 2 0 012 2M4 8v10a2 2 0 01-2 2h12a2 2 0 002-2V8M8 4v4M16 4v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>`,
+  },
+  {
+    href:  '/planner/visits',
+    label: 'Visits',
+    active: path === '/planner/visits',
+    icon: `<g stroke="currentColor" stroke-width="2" fill="none"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke-linecap="round"/><path d="M16 6.5a3 3 0 010 5.5M17 14c2.2.4 4 2.2 4 4.5" stroke-linecap="round"/></g>`,
+  },
+];
+---
+
+<nav class="bottom-nav">
+  {tabs.map(tab => (
+    <a href={tab.href} class={`nav-tab ${tab.active ? 'active' : ''}`}>
+      <svg width="25" height="25" viewBox="0 0 24 24" set:html={tab.icon} />
+      <span>{tab.label}</span>
+    </a>
+  ))}
+</nav>
+
+<style>
+  .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 55;
+    height: 84px;
+    background: rgba(14, 14, 16, 0.86);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    display: flex;
+    padding-bottom: 18px;
+  }
+
+  .nav-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding-top: 8px;
+    text-decoration: none;
+    color: #7C7C82;
+    font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    transition: color 0.15s;
+  }
+
+  .nav-tab.active {
+    color: #2F6BFF;
+  }
+</style>
