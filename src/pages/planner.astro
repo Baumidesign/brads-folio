@@ -129,7 +129,8 @@ viewedMonthLogs?.forEach(log => {
     .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: bold; font-size: 0.75rem; color: #71717a; margin-bottom: 5px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: #27272a; border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
     .day-box { background: #18181b; min-height: 70px; padding: 5px; cursor: pointer; transition: 0.2s; }
-    .day-number { font-size: 0.75rem; color: #71717a; }
+    .day-number { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 0.75rem; color: #8b8b93; font-weight: 400; }
+    .day-number.today { background: #2563eb; color: #fff; font-weight: 700; }
     .day-box:hover { background: #27272a; }
     /* These classes are applied to elements created in client-side JS.
        Using :global() prevents Astro from scoping them with a data-astro-cid attribute,
@@ -434,9 +435,10 @@ viewedMonthLogs?.forEach(log => {
       {Array.from({ length: daysInMonth }).map((_, i) => {
         const day = i + 1;
         const data = hoursByDay[day];
+        const isToday = isCurrentMonth && day === now.getDate();
         return (
           <div class="day-box" data-day={day} onclick={`selectDate('${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}')`}>
-            <span class="day-number">{day}</span>
+            <span class={`day-number${isToday ? ' today' : ''}`}>{day}</span>
             {data?.actual > 0 && <div class="hours-actual">{data.actual}h</div>}
             {data?.planned > 0 && <div class="hours-planned">P: {data.planned}h</div>}
           </div>
