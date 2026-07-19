@@ -12,3 +12,26 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
+
+// A fresh, request-scoped client authenticated via an Authorization header
+// rather than by mutating the shared `supabase` singleton's session. Pass
+// an access token to run RLS-scoped queries as that user; omit it for a
+// one-off unauthenticated operation (e.g. a token refresh call).
+export function createRequestClient(accessToken?: string) {
+  return createClient(
+    supabaseUrl,
+    supabaseKey,
+    accessToken ? { global: { headers: { Authorization: `Bearer ${accessToken}` } } } : undefined
+  );
+}
+
+// Reads a JWT's payload locally (no network call) so callers can check
+// expiry/claims without hitting Supabase's /auth/v1/user endpoint.
+export function decodeAccessToken(token: string): { sub: string; email?: string; exp?: number } | null {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+  } catch {
+    return null;
+  }
+}

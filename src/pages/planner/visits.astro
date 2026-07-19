@@ -1,5 +1,5 @@
 ---
-import { supabase } from '../../lib/supabase';
+import { supabase, createRequestClient, decodeAccessToken } from '../../lib/supabase';
 import BottomNav from '../../components/BottomNav.astro';
 import { VisitsScreen } from '../../components/visits/VisitsScreen';
 
@@ -11,29 +11,39 @@ if (!accessToken || !refreshToken) {
   return Astro.redirect('/login');
 }
 
-let data, authError;
-try {
-  ({ data, error: authError } = await supabase.auth.setSession({
-    access_token:  accessToken,
-    refresh_token: refreshToken,
-  }));
-} catch (e) {
-  console.error('VISITS_PAGE_SUPABASE_ERROR:', e);
-  Astro.cookies.delete('sb-access-token', { path: '/' });
-  Astro.cookies.delete('sb-refresh-token', { path: '/' });
-  return Astro.redirect('/login?error=Server configuration error.');
-}
+const claims = decodeAccessToken(accessToken);
+const nowSeconds = Date.now() / 1000;
 
-if (authError || !data.user) {
-  Astro.cookies.delete('sb-access-token', { path: '/' });
-  Astro.cookies.delete('sb-refresh-token', { path: '/' });
-  return Astro.redirect('/login');
-}
+let user: { id: string; email?: string };
+let sessionAccessToken = accessToken;
 
-const { user } = data;
+if (claims?.exp && claims.exp > nowSeconds + 30) {
+  // Token is still valid — skip the network round trip to Supabase's Auth API.
+  user = { id: claims.sub, email: claims.email };
+} else {
+  // Expired (or undecodable) — refresh via a scoped client, never the shared singleton.
+  let refreshData, refreshError;
+  try {
+    ({ data: refreshData, error: refreshError } = await createRequestClient().auth.refreshSession({
+      refresh_token: refreshToken,
+    }));
+  } catch (e) {
+    console.error('VISITS_PAGE_SUPABASE_ERROR:', e);
+    Astro.cookies.delete('sb-access-token', { path: '/' });
+    Astro.cookies.delete('sb-refresh-token', { path: '/' });
+    return Astro.redirect('/login?error=Server configuration error.');
+  }
 
-if (data.session) {
-  const { access_token, refresh_token, expires_in } = data.session;
+  if (refreshError || !refreshData.session || !refreshData.user) {
+    Astro.cookies.delete('sb-access-token', { path: '/' });
+    Astro.cookies.delete('sb-refresh-token', { path: '/' });
+    return Astro.redirect('/login');
+  }
+
+  const { access_token, refresh_token, expires_in } = refreshData.session;
+  sessionAccessToken = access_token;
+  user = refreshData.user;
+
   Astro.cookies.set('sb-access-token', access_token, {
     path: '/', maxAge: Math.round(expires_in), sameSite: 'lax', secure: import.meta.env.PROD,
   });
@@ -42,8 +52,10 @@ if (data.session) {
   });
 }
 
+const db = createRequestClient(sessionAccessToken);
+
 // --- 2. DATA FETCH ---
-const { data: people, error: fetchError } = await supabase
+const { data: people, error: fetchError } = await db
   .from('people_with_last_visit')
   .select('*')
   .order('interest',        { ascending: false })
@@ -76,7 +88,7 @@ if (fetchError) {
     client:load
     people={people ?? []}
     userId={user.id}
-    accessToken={accessToken}
+    accessToken={sessionAccessToken}
   />
   <BottomNav />
 </body>
