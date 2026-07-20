@@ -17,6 +17,8 @@ const tabs = [
 ];
 ---
 
+<div id="nav-progress"></div>
+
 <nav class="bottom-nav">
   {tabs.map(tab => (
     <a href={tab.href} class={`nav-tab ${tab.active ? 'active' : ''}`}>
@@ -25,6 +27,44 @@ const tabs = [
     </a>
   ))}
 </nav>
+
+<script>
+  function showNavProgress() {
+    const bar = document.getElementById('nav-progress');
+    if (!bar) return;
+    bar.classList.remove('active');
+    void bar.offsetWidth; // restart the transition from 0 on repeated clicks
+    bar.classList.add('active');
+  }
+
+  // Exposed so other same-page navigation triggers (e.g. the calendar's
+  // Prev/Next/Today buttons) can show the same loading feedback.
+  (window as any).__showNavProgress = showNavProgress;
+
+  document.querySelectorAll('.nav-tab').forEach(link => {
+    link.addEventListener('click', showNavProgress);
+  });
+</script>
+
+<style>
+  #nav-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    background: #2563eb;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: width 1.8s cubic-bezier(0.1, 0.5, 0.1, 1), opacity 0.2s;
+  }
+
+  #nav-progress.active {
+    width: 85%;
+    opacity: 1;
+  }
+</style>
 
 <style>
   .bottom-nav {

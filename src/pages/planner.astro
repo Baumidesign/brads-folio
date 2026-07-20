@@ -418,12 +418,12 @@ viewedMonthLogs?.forEach(log => {
 
   <div class="container">
     <div class="month-nav">
-      <button type="button" onclick={`window.location.search='?month=${prevMonth}&year=${prevYear}'`}>&larr; Prev</button>
+      <button type="button" onclick={`window.__showNavProgress && window.__showNavProgress(); window.location.search='?month=${prevMonth}&year=${prevYear}'`}>&larr; Prev</button>
       <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
         {monthName} {currentYear}
-        {!isCurrentMonth && <button type="button" onclick="window.location.search=''" style="font-size: 0.7rem; background: #2563eb; padding: 4px 8px; border-radius: 4px;">Today</button>}
+        {!isCurrentMonth && <button type="button" onclick="window.__showNavProgress && window.__showNavProgress(); window.location.search=''" style="font-size: 0.7rem; background: #2563eb; padding: 4px 8px; border-radius: 4px;">Today</button>}
       </h2>
-      <button type="button" onclick={`window.location.search='?month=${nextMonth}&year=${nextYear}'`}>Next &rarr;</button>
+      <button type="button" onclick={`window.__showNavProgress && window.__showNavProgress(); window.location.search='?month=${nextMonth}&year=${nextYear}'`}>Next &rarr;</button>
     </div>
     
     <div class="dashboard">
