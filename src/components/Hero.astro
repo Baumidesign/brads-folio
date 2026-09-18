@@ -1,15 +1,17 @@
 ---
 interface Props {
+	eyebrow?: string;
 	title: string;
 	tagline?: string;
 	align?: 'start' | 'center';
 }
 
-const { align = 'center', tagline, title } = Astro.props;
+const { align = 'center', eyebrow, tagline, title } = Astro.props;
 ---
 
 <div class:list={['hero stack gap-4', align]}>
 	<div class="stack gap-2">
+		{eyebrow && <p class="eyebrow">{eyebrow}</p>}
 		<h1 class="title">{title}</h1>
 		{tagline && <p class="tagline">{tagline}</p>}
 	</div>
@@ -22,10 +24,20 @@ const { align = 'center', tagline, title } = Astro.props;
 		text-align: center;
 	}
 
+	.eyebrow,
 	.title,
 	.tagline {
 		max-width: 37ch;
 		margin-inline: auto;
+	}
+
+	.eyebrow {
+		font-family: var(--font-brand);
+		font-weight: 600;
+		font-size: var(--text-sm);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--accent-regular);
 	}
 
 	.title {
@@ -42,6 +54,7 @@ const { align = 'center', tagline, title } = Astro.props;
 			text-align: start;
 		}
 
+		.start .eyebrow,
 		.start .title,
 		.start .tagline {
 			margin-inline: unset;

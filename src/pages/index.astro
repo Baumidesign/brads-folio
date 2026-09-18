@@ -30,14 +30,15 @@ const projects = (await getCollection('work'))
 		<div class="wrapper stack gap-8 lg:gap-20">
 			<header class="hero">
 				<Hero
-					title="I am Bradley Baumann"
-					tagline="Born and raised in South Africa, I am a UX Designer & Front-end Developer based in Adelaide, Australia."
+					eyebrow="Bradley Baumann"
+					title="Building Software for Calibration & Compliance Businesses"
+					tagline="I'm currently building a calibration management system — the kind of software that has to get data integrity and process rigor right. Alongside that, I take on freelance web development work."
 					align="start"
 				>
 					<div class="roles">
-						<Pill><Icon icon="code" size="1.33em" /> Consult</Pill>
-						<Pill><Icon icon="check" size="1.33em" /> Validate</Pill>
 						<Pill><Icon icon="pencil-line" size="1.33em" /> Design</Pill>
+						<Pill><Icon icon="shapes" size="1.33em" /> Architect</Pill>
+						<Pill><Icon icon="terminal-window" size="1.33em" /> Build</Pill>
 					</div>
 				</Hero>
 
@@ -56,8 +57,7 @@ const projects = (await getCollection('work'))
 			<section class="section with-background with-cta">
 				<header class="section-header stack gap-2 lg:gap-4">
 					<h3>Selected Work</h3>
-					<p>While my up-to-date work isn't ready to showcase yet, please explore some of my featured projects for clients over the past few years. 
-						Stay tuned as I assemble case studies to highlight my most recent work.</p>
+					<p>Past client and freelance web projects. My current focus — a calibration management system I'm building now — will land here as a full case study soon.</p>
 				</header>
 
 				<div class="gallery">
@@ -83,19 +83,19 @@ const projects = (await getCollection('work'))
 			<section class="section with-background bg-variant">
 				<header class="section-header stack gap-2 lg:gap-4">
 					<h3>Services</h3>
-					<p>
-						
-					As I continue refining the section below, explore my services 
-					and track the progress in this <a href="https://www.figma.com/file/KGvrm2HRbhFJXNetumsRhc/Bento-Services?type=design&node-id=0%3A1&mode=design&t=k7PnYQkUNhWK8d9n-1" target="_blank">Figma file</a>
-					for a glimpse into ongoing development.
-
-					</p>
+					<p>Alongside my calibration systems work, I take on freelance web development — from full builds to fixing what's already there.</p>
 				</header>
 
 				<div class="gallery">
 					<Grid variant="small">
 						{
-							['User Research', 'Interaction Design', 'Usability Testing', 'Web Development', 'Speed Assessment'].map((brand) => (
+							[
+								'Full-Stack Development',
+								'Systems Architecture',
+								'UX & Product Design',
+								'Site Migrations',
+								'Technical Consulting',
+							].map((brand) => (
 								<li class="mention-card">
 									<p>{brand}</p>
 								</li>
@@ -120,6 +120,13 @@ const projects = (await getCollection('work'))
 
 	.roles {
 		display: none;
+	}
+
+	/* The value-prop H1 here is much longer than the short titles Hero.astro
+	   is otherwise used with (e.g. "About"), so it's sized down from the
+	   component's shared default — scoped to this page only. */
+	.hero :global(.title) {
+		font-size: var(--text-2xl);
 	}
 
 	.hero img {
@@ -155,7 +162,7 @@ const projects = (await getCollection('work'))
 	@media (min-width: 50em) {
 		.hero {
 			display: grid;
-			grid-template-columns: 6fr 4fr;
+			grid-template-columns: 7fr 3fr;
 			padding-inline: 2.5rem;
 			gap: 3.75rem;
 		}
@@ -166,6 +173,9 @@ const projects = (await getCollection('work'))
 			gap: 0.5rem;
 		}
 
+		.hero :global(.title) {
+			font-size: var(--text-4xl);
+		}
 	}
 
 	/* ====================================================== */
