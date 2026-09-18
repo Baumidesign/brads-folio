@@ -3,14 +3,28 @@ import { type CollectionEntry, getCollection } from 'astro:content';
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
+import CallToAction from '../../components/CallToAction.astro';
 import ContactCTA from '../../components/ContactCTA.astro';
 import Hero from '../../components/Hero.astro';
 import Icon from '../../components/Icon.astro';
 import Pill from '../../components/Pill.astro';
 
+const contextNote: Record<'owned-product' | 'employer-experience', string> = {
+	'owned-product':
+		"I designed, built, and own this — it's not something built for a client, and the code isn't for hire, but the architecture and approach are exactly what I bring to freelance work.",
+	'employer-experience':
+		"This describes experience and skills I've demonstrated on a system that belongs to my employer — not a product I own or can offer or share independently.",
+};
+
 interface Props {
 	entry: CollectionEntry<'work'>;
 }
+
+// Site is `output: 'server'`, so routes are SSR-per-request by default and
+// getStaticPaths() is ignored unless a route opts into static prerendering.
+// This page's props come entirely from getStaticPaths(), so it must be
+// prerendered or `entry` is never populated.
+export const prerender = true;
 
 // This is a dynamic route that generates a page for every Markdown file in src/content/
 // Read more about dynamic routes and this `getStaticPaths` function in the Astro docs:
@@ -33,18 +47,36 @@ const { Content } = await entry.render();
 			<header>
 				<div class="wrapper stack gap-2">
 					<a class="back-link" href="/work/"><Icon icon="arrow-left" /> Work</a>
-					<Hero title={entry.data.title} align="start">
+					<Hero title={entry.data.title} tagline={entry.data.role} align="start">
 						<div class="details">
 							<div class="tags">
 								{entry.data.tags.map((t) => <Pill>{t}</Pill>)}
 							</div>
 							<p class="description">{entry.data.description}</p>
 						</div>
+						{entry.data.techStack && entry.data.techStack.length > 0 && (
+							<ul class="tech-stack">
+								{entry.data.techStack.map((t) => (
+									<li>{t}</li>
+								))}
+							</ul>
+						)}
+						{entry.data.externalUrl && (
+							<div class="external-link">
+								<CallToAction href={entry.data.externalUrl}>
+									Visit live site
+									<Icon icon="arrow-right" size="1.2em" />
+								</CallToAction>
+							</div>
+						)}
 					</Hero>
 				</div>
 			</header>
 			<main class="wrapper">
 				<div class="stack gap-10 content">
+					{entry.data.caseStudyType && entry.data.caseStudyType !== 'client-site' && (
+						<p class="context-note">{contextNote[entry.data.caseStudyType]}</p>
+					)}
 					{entry.data.img && <img src={entry.data.img} alt={entry.data.img_alt || ''} />}
 					<div class="content">
 						<Content />
@@ -83,6 +115,46 @@ const { Content } = await entry.render();
 	.description {
 		font-size: var(--text-lg);
 		max-width: 54ch;
+	}
+
+	/* Tech-stack badges — deliberately styled lighter/outlined vs. the
+	   solid-accent .tags Pills above, so the two rows read as distinct
+	   kinds of metadata (category tags vs. stack details) rather than
+	   duplicate-looking pill rows. */
+	.tech-stack {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.tech-stack li {
+		padding: 0.3rem 0.75rem;
+		border: 1px solid var(--gray-800);
+		border-radius: 999rem;
+		color: var(--gray-300);
+		font-size: var(--text-sm);
+		white-space: nowrap;
+	}
+
+	.external-link {
+		display: flex;
+		justify-content: center;
+	}
+
+	.context-note {
+		max-width: 65ch;
+		margin-inline: auto;
+		padding: 1rem 1.5rem;
+		border: 1px solid var(--gray-800);
+		border-inline-start: 0.25rem solid var(--accent-dark);
+		border-radius: 0.5rem;
+		background: var(--gray-999_40);
+		color: var(--gray-300);
+		font-size: var(--text-md);
 	}
 
 	.content {
@@ -142,6 +214,11 @@ const { Content } = await entry.render();
 		.details {
 			flex-direction: row;
 			gap: 2.5rem;
+		}
+
+		.tech-stack,
+		.external-link {
+			justify-content: flex-start;
 		}
 
 		.content :global(blockquote) {
