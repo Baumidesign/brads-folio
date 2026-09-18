@@ -43,9 +43,9 @@ const projects = (await getCollection('work'))
 
 				<img
 					alt="A black and white portrait of Bradley Baumann"
-					width="480"
-					height="620"
-					src="/assets/portrait.png"
+					width="347"
+					height="399"
+					src="/assets/portrait-hero.png"
 				/>
 			</header>
 
@@ -123,11 +123,33 @@ const projects = (await getCollection('work'))
 	}
 
 	.hero img {
-		aspect-ratio: 5 / 4;
-		object-fit: cover;
+		/* Matches the source file's native ratio (347x399, trimmed of a
+		   transparent top margin) so object-fit has nothing to crop — the
+		   image already has its own rounded-card framing baked in, so we
+		   don't add a second, differently-curved border-radius on top of
+		   it (that mismatch was leaving a thin gap at the corners). */
+		aspect-ratio: 347 / 399;
+		object-fit: contain;
 		object-position: top;
-		border-radius: 1.5rem;
-		box-shadow: var(--shadow-md);
+		/* box-shadow casts from the <img>'s rectangular box, not the PNG's
+		   transparent silhouette — with no border-radius to match it, that
+		   left a faint rectangular tint behind the rounded corners.
+		   drop-shadow follows the actual alpha shape instead, so the shadow
+		   hugs the card (and the cap) exactly. Same 4 layers/values as
+		   --shadow-md (src/styles/global.css), theme-aware. */
+		filter: var(--portrait-drop-shadow);
+	}
+
+	:root:not(.theme-dark) .hero img {
+		--portrait-drop-shadow: drop-shadow(0px 28px 11px rgba(9, 11, 17, 0.01))
+			drop-shadow(0px 16px 10px rgba(9, 11, 17, 0.03)) drop-shadow(0px 7px 7px rgba(9, 11, 17, 0.05))
+			drop-shadow(0px 2px 4px rgba(9, 11, 17, 0.06));
+	}
+
+	:root.theme-dark .hero img {
+		--portrait-drop-shadow: drop-shadow(0px 28px 11px rgba(255, 255, 255, 0.01))
+			drop-shadow(0px 16px 10px rgba(255, 255, 255, 0.03))
+			drop-shadow(0px 7px 7px rgba(255, 255, 255, 0.05)) drop-shadow(0px 2px 4px rgba(255, 255, 255, 0.06));
 	}
 
 	@media (min-width: 50em) {
@@ -144,11 +166,6 @@ const projects = (await getCollection('work'))
 			gap: 0.5rem;
 		}
 
-		.hero img {
-			aspect-ratio: 3 / 4;
-			border-radius: 4.5rem;
-			object-fit: cover;
-		}
 	}
 
 	/* ====================================================== */
