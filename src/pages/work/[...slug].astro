@@ -50,7 +50,7 @@ const { Content } = await entry.render();
 					<Hero title={entry.data.title} tagline={entry.data.role} align="start">
 						<div class="details">
 							<div class="tags">
-								{entry.data.tags.map((t) => <Pill>{t}</Pill>)}
+								{entry.data.tags.map((t) => <Pill variant="tag">{t}</Pill>)}
 							</div>
 							<p class="description">{entry.data.description}</p>
 						</div>

@@ -14,6 +14,7 @@ import PortfolioPreview from '../components/PortfolioPreview.astro';
 
 // Page section components
 import ContactCTA from '../components/ContactCTA.astro';
+import ServicesBento from '../components/ServicesBento.astro';
 import Skills from '../components/Skills.astro';
 
 // Content Fetching: List four most recent work projects
@@ -36,9 +37,9 @@ const projects = (await getCollection('work'))
 					align="start"
 				>
 					<div class="roles">
-						<Pill><Icon icon="pencil-line" size="1.33em" /> Design</Pill>
-						<Pill><Icon icon="shapes" size="1.33em" /> Architect</Pill>
-						<Pill><Icon icon="terminal-window" size="1.33em" /> Build</Pill>
+						<Pill variant="tag"><Icon icon="pencil-line" size="1.33em" /> Design</Pill>
+						<Pill variant="tag"><Icon icon="shapes" size="1.33em" /> Architect</Pill>
+						<Pill variant="tag"><Icon icon="terminal-window" size="1.33em" /> Build</Pill>
 					</div>
 				</Hero>
 
@@ -87,21 +88,7 @@ const projects = (await getCollection('work'))
 				</header>
 
 				<div class="gallery">
-					<Grid variant="small">
-						{
-							[
-								'Full-Stack Development',
-								'Systems Architecture',
-								'UX & Product Design',
-								'Site Migrations',
-								'Technical Consulting',
-							].map((brand) => (
-								<li class="mention-card">
-									<p>{brand}</p>
-								</li>
-							))
-						}
-					</Grid>
+					<ServicesBento />
 				</div>
 			</section>
 		</main>
@@ -259,25 +246,4 @@ const projects = (await getCollection('work'))
 		}
 	}
 
-	/* ====================================================== */
-
-	.mention-card {
-		display: flex;
-		height: 7rem;
-		justify-content: center;
-		align-items: center;
-		text-align: center;
-		border: 1px solid var(--gray-800);
-		border-radius: 1.5rem;
-		color: var(--gray-300);
-		background: var(--gradient-subtle);
-		box-shadow: var(--shadow-sm);
-	}
-
-	@media (min-width: 50em) {
-		.mention-card {
-			border-radius: 1.5rem;
-			height: 9.5rem;
-		}
-	}
 </style>

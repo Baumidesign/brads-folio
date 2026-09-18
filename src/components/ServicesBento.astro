@@ -1,0 +1,392 @@
+---
+import Icon from './Icon.astro';
+import Pill from './Pill.astro';
+---
+
+<div class="bento">
+	<!-- 1. Systems Architecture — hero card -->
+	<article class="card card-hero">
+		<div class="card-copy">
+			<h4>Systems Architecture</h4>
+			<p>Relational data models, state machines, and audit trails — built so data integrity holds under real-world load.</p>
+		</div>
+		<div class="artifact erd" aria-hidden="true">
+			<div class="erd-node">
+				<span class="erd-title">instruments</span>
+				<span class="erd-field">id <i>· uuid</i></span>
+				<span class="erd-field">serial <i>· text</i></span>
+			</div>
+			<div class="erd-connector"></div>
+			<div class="erd-node">
+				<span class="erd-title">calibration_events</span>
+				<span class="erd-field">instrument_id <i>· fk</i></span>
+				<span class="erd-field">result <i>· numeric</i></span>
+			</div>
+			<div class="erd-connector"></div>
+			<div class="erd-node">
+				<span class="erd-title">audit_log</span>
+				<span class="erd-field">event_id <i>· fk</i></span>
+				<span class="erd-field">actor <i>· text</i></span>
+			</div>
+		</div>
+	</article>
+
+	<!-- 2. Full-Stack Development -->
+	<article class="card card-fullstack">
+		<div class="card-copy">
+			<h4>Full-Stack Development</h4>
+			<p>TypeScript, React, and Supabase/PostgreSQL — from schema to interface, shipped end-to-end.</p>
+		</div>
+		<div class="artifact code" aria-hidden="true">
+			<div class="code-chrome">
+				<span></span><span></span><span></span>
+			</div>
+			<pre><code><span class="tok-kw">interface</span> <span class="tok-type">CalibrationEvent</span> {'{'}
+  instrumentId: <span class="tok-type">string</span>;
+  reading: <span class="tok-type">number</span>;   <span class="tok-comment">// ±0.001 precision</span>
+  verifiedAt: <span class="tok-type">Date</span>;
+{'}'}</code></pre>
+		</div>
+	</article>
+
+	<!-- 3. UX & Product Design -->
+	<article class="card card-ux">
+		<div class="card-copy">
+			<h4>UX & Product Design</h4>
+			<p>Operator-first interfaces that make dense, complex workflows fast and error-resistant.</p>
+		</div>
+		<div class="artifact table" aria-hidden="true">
+			<div class="table-row">
+				<span class="table-label">A203 · Pressure Gauge</span>
+				<span class="status-pill status-ok">✓ In Tolerance</span>
+			</div>
+			<div class="table-row">
+				<span class="table-label">B117 · Torque Wrench</span>
+				<span class="status-pill status-warn">⚠ Due</span>
+			</div>
+		</div>
+	</article>
+
+	<!-- 4. Platform & Data Migrations — wide card -->
+	<article class="card card-migrations">
+		<div class="card-copy">
+			<h4>Platform & Data Migrations</h4>
+			<p>Moving legacy, manual systems to modern cloud infrastructure — zero data loss, from an active migration to a ground-up rebuild.</p>
+		</div>
+		<div class="artifact transition" aria-hidden="true">
+			<span class="migration-label">Stack Migration:</span>
+			<div class="migration-row">
+				<Pill variant="tag">Power Platform / Dataverse</Pill>
+				<Icon icon="arrow-right" size="1.2em" />
+				<Pill variant="tag">React + Supabase</Pill>
+			</div>
+		</div>
+	</article>
+
+	<!-- 5. Technical Consulting & Audits -->
+	<article class="card card-consulting">
+		<div class="card-copy">
+			<h4>Technical Consulting & Audits</h4>
+			<p>Architecture reviews, performance tuning, and workflow automation for growing businesses.</p>
+		</div>
+		<ul class="artifact checklist" aria-hidden="true">
+			<li><Icon icon="check" size="1.1em" /> Schema reviewed</li>
+			<li><Icon icon="check" size="1.1em" /> N+1 queries fixed</li>
+			<li><Icon icon="check" size="1.1em" /> Auth hardened</li>
+		</ul>
+	</article>
+</div>
+
+<style>
+	.bento {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.card {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+		padding: 1.5rem;
+		border: 1px solid var(--gray-800);
+		border-radius: 1.5rem;
+		background-color: var(--gray-999_40);
+		backdrop-filter: blur(10px);
+		box-shadow: var(--shadow-sm);
+		overflow: hidden;
+		transition: transform var(--theme-transition), border-color var(--theme-transition),
+			box-shadow var(--theme-transition);
+	}
+
+	.card:hover {
+		transform: translateY(-2px);
+		border-color: var(--gray-700);
+		box-shadow: var(--shadow-md);
+	}
+
+	/* Restrained accent glow — hero card only, so the other four stay calm. */
+	.card-hero::before {
+		content: '';
+		position: absolute;
+		top: -30%;
+		right: -20%;
+		width: 60%;
+		aspect-ratio: 1;
+		background: radial-gradient(circle, var(--accent-overlay), transparent 70%);
+		pointer-events: none;
+	}
+
+	.card-copy {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.card-copy h4 {
+		font-family: var(--font-brand);
+		font-size: var(--text-lg);
+		color: var(--gray-0);
+	}
+
+	.card-copy p {
+		font-family: var(--font-body);
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+		line-height: 1.5;
+	}
+
+	.artifact {
+		position: relative;
+		margin-top: auto;
+	}
+
+	/* The hero card is tall enough (2 grid rows) that pushing its artifact
+	   to the bottom via margin-top: auto leaves a dead gap in the middle —
+	   let it sit in normal flow instead. */
+	.card-hero .artifact {
+		margin-top: 0;
+	}
+
+	/* ---- Card 1: ERD ---- */
+	.erd {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.erd-node {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		padding: 0.6rem 0.75rem;
+		border: 1px solid var(--gray-800);
+		border-radius: 0.5rem;
+		background: var(--gray-999_40);
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 0.7rem;
+	}
+
+	.erd-title {
+		color: var(--gray-0);
+		font-weight: 600;
+	}
+
+	.erd-field {
+		color: var(--gray-400);
+	}
+
+	.erd-field i {
+		font-style: normal;
+		color: var(--gray-600);
+	}
+
+	.erd-connector {
+		width: 1px;
+		height: 0.9rem;
+		margin-left: 1rem;
+		background: var(--gray-700);
+	}
+
+	/* ---- Card 2: code snippet — fixed dark chrome, deliberately theme-independent ---- */
+	.code {
+		border-radius: 0.75rem;
+		overflow: hidden;
+		background: #0d1117;
+		border: 1px solid rgba(255, 255, 255, 0.08);
+	}
+
+	.code-chrome {
+		display: flex;
+		gap: 0.35rem;
+		padding: 0.55rem 0.7rem;
+		background: rgba(255, 255, 255, 0.04);
+	}
+
+	.code-chrome span {
+		width: 0.55rem;
+		height: 0.55rem;
+		border-radius: 999rem;
+		background: rgba(255, 255, 255, 0.15);
+	}
+
+	.code pre {
+		margin: 0;
+		padding: 0.85rem 1rem 1rem;
+		overflow-x: auto;
+	}
+
+	.code code {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 0.7rem;
+		line-height: 1.6;
+		color: #c9d1d9;
+		white-space: pre;
+	}
+
+	.tok-kw {
+		color: #ff7b72;
+	}
+
+	.tok-type {
+		color: #79c0ff;
+	}
+
+	.tok-comment {
+		color: #8b949e;
+	}
+
+	/* ---- Card 3: status table ---- */
+	.table {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.table-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding: 0.6rem 0.75rem;
+		border: 1px solid var(--gray-800);
+		border-radius: 0.6rem;
+		background: var(--gray-999_40);
+	}
+
+	.table-label {
+		font-size: var(--text-sm);
+		color: var(--gray-300);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.status-pill {
+		flex-shrink: 0;
+		padding: 0.2rem 0.6rem;
+		border-radius: 999rem;
+		font-size: 0.7rem;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.status-ok {
+		color: #1a8a4a;
+		background: rgba(26, 138, 74, 0.12);
+	}
+
+	.status-warn {
+		color: #b7791f;
+		background: rgba(183, 121, 31, 0.14);
+	}
+
+	/* ---- Card 4: migration transition badge ---- */
+	.transition {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.migration-label {
+		font-size: var(--text-sm);
+		font-weight: 600;
+		color: var(--gray-400);
+	}
+
+	.migration-row {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+		color: var(--gray-400);
+	}
+
+	/* ---- Card 5: checklist ---- */
+	.checklist {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		font-size: var(--text-sm);
+		color: var(--gray-300);
+	}
+
+	.checklist li {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		color: var(--accent-regular);
+	}
+
+	.checklist li :global(svg) {
+		flex-shrink: 0;
+	}
+
+	@media (min-width: 50em) {
+		.bento {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			grid-template-areas:
+				'hero hero fullstack'
+				'hero hero ux'
+				'migrations migrations consulting';
+			gap: 1.5rem;
+		}
+
+		.card-hero {
+			grid-area: hero;
+			padding: 2rem;
+			justify-content: center;
+			gap: 2rem;
+		}
+
+		.card-fullstack {
+			grid-area: fullstack;
+		}
+
+		.card-ux {
+			grid-area: ux;
+		}
+
+		.card-migrations {
+			grid-area: migrations;
+		}
+
+		.card-consulting {
+			grid-area: consulting;
+		}
+
+		.card-hero .card-copy h4 {
+			font-size: var(--text-xl);
+		}
+
+		.card-hero .erd-node {
+			font-size: 0.75rem;
+		}
+	}
+</style>
