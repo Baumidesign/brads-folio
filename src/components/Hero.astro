@@ -2,17 +2,22 @@
 interface Props {
 	eyebrow?: string;
 	title: string;
+	// Optional raw-HTML title for cases that need an explicit break point
+	// (e.g. a <span> that's forced to display:block at one breakpoint only)
+	// rather than relying on natural text wrapping. Opt-in only — plain
+	// `title` still renders as escaped text everywhere else.
+	titleHtml?: string;
 	tagline?: string;
 	align?: 'start' | 'center';
 }
 
-const { align = 'center', eyebrow, tagline, title } = Astro.props;
+const { align = 'center', eyebrow, tagline, title, titleHtml } = Astro.props;
 ---
 
 <div class:list={['hero stack gap-4', align]}>
 	<div class="stack gap-2">
 		{eyebrow && <p class="eyebrow">{eyebrow}</p>}
-		<h1 class="title">{title}</h1>
+		{titleHtml ? <h1 class="title" set:html={titleHtml} /> : <h1 class="title">{title}</h1>}
 		{tagline && <p class="tagline">{tagline}</p>}
 	</div>
 	<slot />

@@ -32,8 +32,9 @@ const projects = (await getCollection('work'))
 			<header class="hero">
 				<Hero
 					eyebrow="Bradley Baumann"
-					title="Building Software for Calibration & Compliance Businesses"
-					tagline="I'm currently building a calibration management system — the kind of software that has to get data integrity and process rigor right. Alongside that, I take on freelance web development work."
+					title="Software for Calibration & Compliance Businesses"
+					titleHtml="Software for Calibration <span class='force-break'>&amp; Compliance Businesses</span>"
+					tagline="I specialize in calibration and internal management systems, where data integrity and user experience both have to be right. I also take on custom web applications and freelance work."
 					align="start"
 				>
 					<div class="roles">
@@ -116,6 +117,12 @@ const projects = (await getCollection('work'))
 		font-size: var(--text-2xl);
 	}
 
+	/* Natural wrapping on mobile — the forced break only kicks in at the
+	   desktop breakpoint below. */
+	.hero :global(.force-break) {
+		display: inline;
+	}
+
 	.hero img {
 		/* Matches the source file's native ratio (347x399, trimmed of a
 		   transparent top margin) so object-fit has nothing to crop — the
@@ -162,6 +169,10 @@ const projects = (await getCollection('work'))
 
 		.hero :global(.title) {
 			font-size: var(--text-4xl);
+		}
+
+		.hero :global(.force-break) {
+			display: block;
 		}
 	}
 
