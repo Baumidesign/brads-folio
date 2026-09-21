@@ -26,7 +26,10 @@ const projects = (await getCollection('work'))
 // https://docs.astro.build/core-concepts/astro-components/
 ---
 
-<BaseLayout>
+<BaseLayout
+	title="Bradley Baumann — Full-Stack Developer, Adelaide"
+	description="Full-stack developer based in Adelaide, South Australia, specialising in calibration and compliance management systems for regulated industries."
+>
 	<div class="stack gap-20 lg:gap-48">
 		<div class="wrapper stack gap-8 lg:gap-20">
 			<header class="hero">
@@ -42,6 +45,7 @@ const projects = (await getCollection('work'))
 						<Pill variant="tag"><Icon icon="shapes" size="1.33em" /> Architect</Pill>
 						<Pill variant="tag"><Icon icon="terminal-window" size="1.33em" /> Build</Pill>
 					</div>
+					<p class="location">Based in Adelaide, South Australia · Working with clients Australia-wide</p>
 				</Hero>
 
 				<img
@@ -108,6 +112,12 @@ const projects = (await getCollection('work'))
 
 	.roles {
 		display: none;
+	}
+
+	.location {
+		margin-top: 0.75rem;
+		font-size: var(--text-sm);
+		color: var(--gray-400);
 	}
 
 	/* The value-prop H1 here is much longer than the short titles Hero.astro
