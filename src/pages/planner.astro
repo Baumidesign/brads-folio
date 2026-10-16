@@ -349,6 +349,13 @@ viewedMonthLogs?.forEach(log => {
     }
     .entry-modal.open { transform: translateY(0); }
 
+    /* Drag handle zone for swipe-to-close — no browser panning/scrolling here */
+    .entry-modal-grabber,
+    .entry-modal-header {
+      touch-action: none;
+      cursor: grab;
+    }
+
     .entry-modal-grabber {
       display: flex;
       justify-content: center;
@@ -409,8 +416,30 @@ viewedMonthLogs?.forEach(log => {
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      touch-action: manipulation; /* stop rapid taps triggering iOS double-tap zoom */
     }
     .stepper-btn:hover { background: #52525b; }
+
+    .hour-chips {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .hour-chip {
+      height: 48px;
+      border-radius: 12px;
+      border: 1px solid #3f3f46;
+      background: #1f1f23;
+      color: #e4e4e7;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    /* .active is toggled by client JS */
+    :global(.hour-chip.active) { background: #2563eb; border-color: #2563eb; color: white; }
     .stepper-value {
       flex: 1;
       text-align: center;
@@ -666,6 +695,11 @@ viewedMonthLogs?.forEach(log => {
     <div class="entry-modal-body">
       <div>
         <div style="font-size: 0.8rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Hours</div>
+        <div id="hourChips" class="hour-chips">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(h => (
+            <button type="button" class="hour-chip" data-hours={h}>{h}h</button>
+          ))}
+        </div>
         <div class="hour-stepper">
           <button type="button" id="stepperMinus" class="stepper-btn">&#x2212;</button>
           <div id="stepperValue" class="stepper-value">0h</div>
@@ -674,7 +708,7 @@ viewedMonthLogs?.forEach(log => {
       </div>
       <div>
         <div style="font-size: 0.8rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Notes</div>
-        <textarea id="modalNotes" class="form-btn" placeholder="Notes..." style="width: 100%; box-sizing: border-box; min-height: 80px; resize: vertical;"></textarea>
+        <textarea id="modalNotes" class="form-btn" placeholder="Notes..." style="width: 100%; box-sizing: border-box; min-height: 80px; resize: vertical; font-size: 16px;"></textarea>
       </div>
       <label class="modal-toggle-row">
         <input type="checkbox" id="modalPlanned" />
@@ -768,6 +802,7 @@ viewedMonthLogs?.forEach(log => {
       const stepperMinus = document.getElementById('stepperMinus') as HTMLButtonElement;
       const stepperPlus = document.getElementById('stepperPlus') as HTMLButtonElement;
       const stepperValue = document.getElementById('stepperValue') as HTMLDivElement;
+      const hourChips = document.getElementById('hourChips') as HTMLDivElement;
       const modalNotes = document.getElementById('modalNotes') as HTMLTextAreaElement;
       const modalPlanned = document.getElementById('modalPlanned') as HTMLInputElement;
       const modalSaveBtn = document.getElementById('modalSaveBtn') as HTMLButtonElement;
@@ -882,6 +917,9 @@ viewedMonthLogs?.forEach(log => {
       // --- FAB & ENTRY MODAL ---
       function updateStepperDisplay() {
         stepperValue.textContent = `${modalHours}h`;
+        hourChips.querySelectorAll<HTMLButtonElement>('.hour-chip').forEach(chip => {
+          chip.classList.toggle('active', Number(chip.dataset.hours) === modalHours);
+        });
       }
 
       function openEntryModal(dateStr: string) {
@@ -931,6 +969,12 @@ viewedMonthLogs?.forEach(log => {
       });
       stepperPlus.addEventListener('click', () => {
         modalHours = Math.round((modalHours + 0.5) * 10) / 10;
+        updateStepperDisplay();
+      });
+      hourChips.addEventListener('click', (e) => {
+        const chip = (e.target as HTMLElement).closest<HTMLButtonElement>('.hour-chip');
+        if (!chip) return;
+        modalHours = Number(chip.dataset.hours);
         updateStepperDisplay();
       });
 
@@ -1041,6 +1085,55 @@ viewedMonthLogs?.forEach(log => {
         yearPlanOverlay.classList.remove('open');
         yearPlanSheet.classList.remove('open');
       }
+
+      // --- SWIPE DOWN TO CLOSE (both sheets) ---
+      // Dragging the grabber/header moves the sheet with the finger; releasing
+      // past a third of its height (or a quick downward flick) closes it,
+      // otherwise it springs back. The scrollable body is deliberately excluded.
+      function enableDragToClose(sheet: HTMLElement, overlay: HTMLElement, close: () => void) {
+        const handles = sheet.querySelectorAll<HTMLElement>('.entry-modal-grabber, .entry-modal-header');
+        let pointerId: number | null = null;
+        let startY = 0;
+        let startTime = 0;
+        let dy = 0;
+
+        handles.forEach(handle => {
+          handle.addEventListener('pointerdown', (e) => {
+            if (pointerId !== null || (e.target as HTMLElement).closest('button')) return;
+            pointerId = e.pointerId;
+            startY = e.clientY;
+            startTime = performance.now();
+            dy = 0;
+            sheet.style.transition = 'none';
+            handle.setPointerCapture(e.pointerId);
+          });
+
+          handle.addEventListener('pointermove', (e) => {
+            if (e.pointerId !== pointerId) return;
+            dy = Math.max(0, e.clientY - startY);
+            sheet.style.transform = `translateY(${dy}px)`;
+            overlay.style.opacity = String(Math.max(0, 1 - dy / sheet.offsetHeight));
+          });
+
+          const endDrag = (e: PointerEvent) => {
+            if (e.pointerId !== pointerId) return;
+            pointerId = null;
+            const velocity = dy / Math.max(1, performance.now() - startTime); // px/ms
+            const shouldClose = dy > sheet.offsetHeight / 3 || (velocity > 0.5 && dy > 20);
+            // Restore the CSS transition, then hand transform back to the .open class
+            // (or to the closed state) so it animates from the dragged position.
+            sheet.style.transition = '';
+            sheet.style.transform = '';
+            overlay.style.opacity = '';
+            if (shouldClose) close();
+          };
+          handle.addEventListener('pointerup', endDrag);
+          handle.addEventListener('pointercancel', endDrag);
+        });
+      }
+
+      enableDragToClose(entryModal, entryModalOverlay, closeEntryModal);
+      enableDragToClose(yearPlanSheet, yearPlanOverlay, closeYearPlanSheet);
 
       planYearBtn.addEventListener('click', openYearPlanSheet);
       yearPlanCloseBtn.addEventListener('click', closeYearPlanSheet);
