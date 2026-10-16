@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { T } from './tokens';
 import { Avatar, InterestControl, Label, PinGlyph } from './atoms';
@@ -55,6 +55,51 @@ export function PersonSheet({ person, isNew, userId, accessToken, onSave, onDele
   const [error, setError]               = useState<string | null>(null);
 
   const set = (k: string, v: unknown) => setDraft(d => ({ ...d, [k]: v }));
+
+  // Swipe down to close: dragging the grabber/header moves the sheet with the
+  // finger; releasing past a third of its height (or a quick flick) slides it
+  // out and closes, otherwise it springs back. Buttons/inputs still tap normally.
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const scrimRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ id: number; startY: number; startTime: number; dy: number } | null>(null);
+
+  const onDragStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (drag.current || (e.target as HTMLElement).closest('button, input')) return;
+    drag.current = { id: e.pointerId, startY: e.clientY, startTime: performance.now(), dy: 0 };
+    if (sheetRef.current) sheetRef.current.style.transition = 'none';
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    const sheet = sheetRef.current;
+    if (!d || e.pointerId !== d.id || !sheet) return;
+    d.dy = Math.max(0, e.clientY - d.startY);
+    sheet.style.transform = `translateY(${d.dy}px)`;
+    if (scrimRef.current) scrimRef.current.style.opacity = String(Math.max(0, 1 - d.dy / sheet.offsetHeight));
+  };
+
+  const onDragEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    const sheet = sheetRef.current;
+    if (!d || e.pointerId !== d.id || !sheet) return;
+    drag.current = null;
+    const velocity = d.dy / Math.max(1, performance.now() - d.startTime); // px/ms
+    const shouldClose = d.dy > sheet.offsetHeight / 3 || (velocity > 0.5 && d.dy > 20);
+    if (shouldClose) {
+      sheet.style.transition = 'transform .22s ease-in';
+      sheet.style.transform = 'translateY(100%)';
+      if (scrimRef.current) {
+        scrimRef.current.style.transition = 'opacity .22s ease-in';
+        scrimRef.current.style.opacity = '0';
+      }
+      setTimeout(onClose, 220);
+    } else {
+      sheet.style.transition = 'transform .28s cubic-bezier(.2,.8,.2,1)';
+      sheet.style.transform = 'translateY(0)';
+      if (scrimRef.current) scrimRef.current.style.opacity = '';
+    }
+  };
 
   useEffect(() => {
     if (!isNew && person) {
@@ -178,42 +223,53 @@ export function PersonSheet({ person, isNew, userId, accessToken, onSave, onDele
       <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
         {/* scrim */}
         <div
+          ref={scrimRef}
           onClick={onClose}
           style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}
         />
 
         {/* sheet */}
-        <div style={{
+        <div ref={sheetRef} style={{
           position: 'relative', background: '#141416',
           borderTopLeftRadius: 28, borderTopRightRadius: 28,
           maxHeight: '92%', display: 'flex', flexDirection: 'column',
           boxShadow: '0 -8px 40px rgba(0,0,0,0.6)',
           animation: 'sheetUp .28s cubic-bezier(.2,.8,.2,1)',
         }}>
+          {/* drag handle zone: grabber + header */}
+          <div
+            onPointerDown={onDragStart}
+            onPointerMove={onDragMove}
+            onPointerUp={onDragEnd}
+            onPointerCancel={onDragEnd}
+            style={{ flexShrink: 0, touchAction: 'none', cursor: 'grab' }}
+          >
           {/* grabber */}
-          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10, flexShrink: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10 }}>
             <div style={{ width: 38, height: 5, borderRadius: 5, background: 'rgba(255,255,255,0.2)' }} />
           </div>
 
           {/* header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '14px 20px 6px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '14px 20px 6px' }}>
             <Avatar name={draft.name || '?'} size={48} />
             <input
               value={draft.name}
               onChange={e => set('name', e.target.value)}
               placeholder="Full name"
               style={{
-                flex: 1, background: 'none', border: 'none', outline: 'none',
+                flex: 1, minWidth: 0, background: 'none', border: 'none', outline: 'none',
                 color: T.white, fontFamily: T.font, fontSize: 22, fontWeight: 700,
               }}
             />
             <button
               onClick={onClose}
+              aria-label="Close"
               style={{
                 background: T.control, border: 'none', width: 32, height: 32,
                 borderRadius: 32, color: T.text2, fontSize: 17, cursor: 'pointer', flexShrink: 0,
               }}
             >✕</button>
+          </div>
           </div>
 
           {/* scrollable body */}
