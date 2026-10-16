@@ -96,21 +96,19 @@ const { data: viewedMonthLogs } = await db
   .order('date', { ascending: false });
 
 // --- 4. CALCULATE TOTALS ---
-const hoursByDay: Record<number, { actual: number, planned: number }> = {};
-let monthActual = 0;
-let monthPlanned = 0;
+// Keep in sync with summarizeLogs() in the client script below.
+type DayTotals = { actual: number, planned: number, credit: number, creditPlanned: number };
+const hoursByDay: Record<number, DayTotals> = {};
+const month: DayTotals = { actual: 0, planned: 0, credit: 0, creditPlanned: 0 };
 
 viewedMonthLogs?.forEach(log => {
   const day = parseInt(log.date.split('-')[2], 10);
-  if (!hoursByDay[day]) hoursByDay[day] = { actual: 0, planned: 0 };
-  
-  if (log.is_planned) {
-    hoursByDay[day].planned += log.hours;
-    monthPlanned += log.hours;
-  } else {
-    hoursByDay[day].actual += log.hours;
-    monthActual += log.hours;
-  }
+  if (!hoursByDay[day]) hoursByDay[day] = { actual: 0, planned: 0, credit: 0, creditPlanned: 0 };
+  const key: keyof DayTotals = log.kind === 'credit'
+    ? (log.is_planned ? 'creditPlanned' : 'credit')
+    : (log.is_planned ? 'planned' : 'actual');
+  hoursByDay[day][key] += log.hours || 0;
+  month[key] += log.hours || 0;
 });
 
 ---
@@ -147,12 +145,55 @@ viewedMonthLogs?.forEach(log => {
        ensuring the styles apply to our dynamically generated divs. */
     :global(.hours-actual) { background: #2563eb; color: white; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; font-weight: bold; }
     :global(.hours-planned) { border: 1px dashed #60a5fa; color: #60a5fa; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; }
+    :global(.hours-credit) { background: #f59e0b; color: #18181b; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; font-weight: bold; }
+    :global(.hours-credit-planned) { border: 1px dashed #fbbf24; color: #fbbf24; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; }
+    .stat-sub { font-size: 0.75rem; color: #a1a1aa; margin-top: 0.35rem; }
+
+    /* Entries list — week groups and cards are built by client JS, hence :global() */
+    #logListContainer { display: flex; flex-direction: column; gap: 1.25rem; }
+    :global(.week-group) { display: flex; flex-direction: column; gap: 0.5rem; }
+    :global(.week-header) {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #a1a1aa; padding: 0 0.25rem;
+    }
+    :global(.week-header-total) { text-transform: none; letter-spacing: 0; color: #71717a; }
+    :global(.entry-card) {
+      display: flex; align-items: center; gap: 0.9rem; width: 100%;
+      background: #18181b; border: 1px solid #27272a; border-radius: 12px;
+      padding: 0.75rem 0.9rem; color: inherit; font-family: inherit; text-align: left;
+      cursor: pointer; touch-action: manipulation;
+    }
+    :global(.entry-card:hover) { background: #1f1f23; }
+    :global(.entry-card:active) { background: #27272a; }
+    :global(.entry-date) { display: flex; flex-direction: column; align-items: center; min-width: 2.5rem; flex-shrink: 0; }
+    :global(.entry-date-num) { font-size: 1.35rem; font-weight: 700; line-height: 1.1; }
+    :global(.entry-date-dow) { font-size: 0.7rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; }
+    :global(.entry-body) { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    :global(.entry-title) { font-size: 0.9rem; font-weight: 600; }
+    :global(.entry-title-muted) { color: #71717a; font-weight: 400; }
+    :global(.entry-notes) {
+      font-size: 0.8rem; color: #a1a1aa;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    :global(.entry-amount) { flex-shrink: 0; font-size: 0.95rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+    :global(.entry-amount.hours) { background: #2563eb; color: white; }
+    :global(.entry-amount.hours.planned) { background: none; border: 1px dashed #60a5fa; color: #60a5fa; }
+    :global(.entry-amount.credit) { background: #f59e0b; color: #18181b; }
+    :global(.entry-amount.credit.planned) { background: none; border: 1px dashed #fbbf24; color: #fbbf24; }
+    :global(.entries-empty) { color: #71717a; margin: 0; }
+
+    /* Hours | Credit toggle in the day sheet; aria-pressed is toggled by client JS */
+    .kind-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #27272a; border-radius: 12px; padding: 4px; }
+    .kind-option {
+      height: 40px; border: none; border-radius: 9px; background: none; color: #a1a1aa;
+      font-family: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; touch-action: manipulation;
+    }
+    :global(.kind-option[aria-pressed="true"]) { background: #3f3f46; color: #fafafa; }
     
     input, textarea, button.form-btn { padding: 0.8rem; border-radius: 6px; border: 1px solid #3f3f46; background: #09090b; color: white; font-family: inherit; }
     .btn-primary { background: #2563eb; border: none; font-weight: bold; cursor: pointer; color: white; }
     .btn-primary:hover { background: #1d4ed8; }
 
-    .log-item { border-bottom: 1px solid #27272a; padding: 1rem 0; display: flex; justify-content: space-between; align-items: flex-start; }
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -174,28 +215,6 @@ viewedMonthLogs?.forEach(log => {
       max-width: 400px;
       text-align: center;
     }
-    .log-item-header {
-      font-weight: bold;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .log-item-notes {
-      font-size: 0.85rem;
-      color: #a1a1aa;
-      font-style: italic;
-    }
-    .log-item-info {
-      flex-grow: 1;
-    }
-    .log-item-hours {
-      color: #60a5fa;
-    }
-    .log-badge.planned { border: 1px dashed #60a5fa; color: #60a5fa; padding: 2px 6px; border-radius: 12px; font-size: 0.7rem; }
-    .action-group { display: flex; gap: 8px; }
-    .btn-edit { background: transparent; border: 1px solid #3f3f46; color: #fafafa; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; }
-    .btn-delete { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; }
 
     .toast-container {
       position: fixed;
@@ -263,35 +282,6 @@ viewedMonthLogs?.forEach(log => {
       }
       .day-box {
         min-height: 60px; /* Slightly smaller day boxes */
-      }
-      .log-item {
-        /* Transform list items into cards on mobile */
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-        padding: 1rem;
-        border-radius: 8px;
-        background: #18181b;
-        border-bottom: none; /* Remove the desktop line separator */
-      }
-      /* Add space between the new log item cards */
-      #logListContainer {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      .log-item-header {
-        font-size: 1rem; /* Increase font size for readability */
-      }
-      .action-group {
-        width: 100%; /* Make buttons take full width */
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-      }
-      .btn-edit, .btn-delete {
-        padding: 0.8rem; /* Larger touch targets */
-        text-align: center;
-        font-weight: bold;
       }
       .modal-content {
         width: 90%;
@@ -594,12 +584,14 @@ viewedMonthLogs?.forEach(log => {
     
     <div class="dashboard">
       <div class="stat-card actual">
-        <div class="stat-label">Actual Hours</div>
-        <div id="monthActualValue" class="stat-value">{monthActual}</div>
+        <div class="stat-label">Total Hours</div>
+        <div id="monthTotalValue" class="stat-value">{month.actual + month.credit}</div>
+        <div id="monthTotalSub" class="stat-sub">{month.actual}h ministry · {month.credit}h credit</div>
       </div>
       <div class="stat-card planned">
-        <div class="stat-label">Planned Hours</div>
-        <div id="monthPlannedValue" class="stat-value">{monthPlanned}</div>
+        <div class="stat-label">Planned</div>
+        <div id="monthPlannedValue" class="stat-value">{month.planned + month.creditPlanned}</div>
+        <div id="monthPlannedSub" class="stat-sub">{month.planned}h ministry · {month.creditPlanned}h credit</div>
       </div>
     </div>
 
@@ -622,6 +614,8 @@ viewedMonthLogs?.forEach(log => {
             <span class={`day-number${isToday ? ' today' : ''}`}>{day}</span>
             {data?.actual > 0 && <div class="hours-actual">{data.actual}h</div>}
             {data?.planned > 0 && <div class="hours-planned">P: {data.planned}h</div>}
+            {data?.credit > 0 && <div class="hours-credit">C: {data.credit}h</div>}
+            {data?.creditPlanned > 0 && <div class="hours-credit-planned">PC: {data.creditPlanned}h</div>}
           </div>
         )
       })}
@@ -629,46 +623,10 @@ viewedMonthLogs?.forEach(log => {
 
     <div style="margin-top: 2rem;">
       <h3>Entries for {monthName}</h3>
-      <div id="logListContainer">
-        {viewedMonthLogs?.length === 0 && <p style="color: #71717a;">No entries for this month.</p>}
-        {viewedMonthLogs?.map((log) => (
-          <div class="log-item" data-log-id={log.id}>
-            <div class="log-item-info">
-              <div class="log-item-header">
-                <span class="log-item-date">{new Date(log.date).toLocaleDateString('en-AU', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' })}</span>
-                <span class="log-item-hours">{log.hours} hrs</span>
-                {log.is_planned && <span class="log-badge planned">Planned</span>}
-              </div>
-              {log.notes && <div class="log-item-notes">{log.notes}</div>}
-            </div>
-            <div class="action-group">
-              <button type="button" class="btn-edit" 
-                data-id={log.id} data-date={log.date} data-hours={log.hours} 
-                data-planned={String(log.is_planned)} data-notes={log.notes || ''}>Edit</button>
-              <button type="button" class="btn-delete" data-id={log.id}>Delete</button>
-            </div>
-          </div>
-        ))}
-      </div>
+      <!-- Week-grouped entry cards are rendered client-side by renderLogList() -->
+      <div id="logListContainer"></div>
     </div>
   </div>
-
-  <template id="log-item-template">
-    <div class="log-item">
-      <div class="log-item-info">
-        <div class="log-item-header">
-          <span class="log-item-date"></span>
-          <span class="log-item-hours"></span>
-          <span class="log-badge planned">Planned</span>
-        </div>
-        <div class="log-item-notes"></div>
-      </div>
-      <div class="action-group">
-        <button type="button" class="btn-edit">Edit</button>
-        <button type="button" class="btn-delete">Delete</button>
-      </div>
-    </div>
-  </template>
 
   <div id="deleteModal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
@@ -693,8 +651,12 @@ viewedMonthLogs?.forEach(log => {
       <button type="button" id="modalCloseBtn" class="modal-close-btn">&#x2715;</button>
     </div>
     <div class="entry-modal-body">
+      <div id="kindToggle" class="kind-toggle" role="group" aria-label="Entry type">
+        <button type="button" class="kind-option" data-kind="hours" aria-pressed="true">Hours</button>
+        <button type="button" class="kind-option" data-kind="credit" aria-pressed="false">Credit</button>
+      </div>
       <div>
-        <div style="font-size: 0.8rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Hours</div>
+        <div style="font-size: 0.8rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Amount</div>
         <div id="hourChips" class="hour-chips">
           {[1, 2, 3, 4, 5, 6, 7, 8].map(h => (
             <button type="button" class="hour-chip" data-hours={h}>{h}h</button>
@@ -766,6 +728,15 @@ viewedMonthLogs?.forEach(log => {
       hours: number;
       notes: string | null;
       is_planned: boolean;
+      kind: EntryKind;
+    }
+
+    type EntryKind = 'hours' | 'credit';
+    type DayTotals = { actual: number, planned: number, credit: number, creditPlanned: number };
+
+    function totalsKey(log: PlannerLog): keyof DayTotals {
+      if (log.kind === 'credit') return log.is_planned ? 'creditPlanned' : 'credit';
+      return log.is_planned ? 'planned' : 'actual';
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -780,6 +751,8 @@ viewedMonthLogs?.forEach(log => {
       let selectedDate: string = defaultDate;
       let editingLogId: string | null = null;
       let modalHours: number = 0;
+      let modalKind: EntryKind = 'hours';
+      let openedLog: PlannerLog | null = null; // the specific entry a card tap opened, if any
       let yearPlanSelected = new Set<string>();
       let yearPlanExisting = new Set<string>();
       let yearPlanHours: number = 4;
@@ -790,8 +763,11 @@ viewedMonthLogs?.forEach(log => {
       const cancelDeleteBtn = document.getElementById('cancelDeleteBtn') as HTMLButtonElement;
       const confirmDeleteBtn = document.getElementById('confirmDeleteBtn') as HTMLButtonElement;
       const logListContainer = document.getElementById('logListContainer') as HTMLDivElement;
-      const monthActualValue = document.getElementById('monthActualValue') as HTMLDivElement;
+      const monthTotalValue = document.getElementById('monthTotalValue') as HTMLDivElement;
+      const monthTotalSub = document.getElementById('monthTotalSub') as HTMLDivElement;
       const monthPlannedValue = document.getElementById('monthPlannedValue') as HTMLDivElement;
+      const monthPlannedSub = document.getElementById('monthPlannedSub') as HTMLDivElement;
+      const kindToggle = document.getElementById('kindToggle') as HTMLDivElement;
       const calendarGrid = document.getElementById('calendarGrid') as HTMLDivElement;
       const toastContainer = document.getElementById('toast-container') as HTMLDivElement;
       const fab = document.getElementById('fab') as HTMLButtonElement;
@@ -839,78 +815,110 @@ viewedMonthLogs?.forEach(log => {
       }
 
       // --- LOG LIST RENDERING ---
-      function createLogElement(log: PlannerLog) {
-        const template = document.getElementById('log-item-template') as HTMLTemplateElement;
-        if (!template) {
-          console.error('The log item template was not found.');
-          return document.createElement('div');
-        }
-        const clone = template.content.cloneNode(true) as DocumentFragment;
-        const logItem = clone.querySelector('.log-item') as HTMLDivElement;
-        logItem.dataset.logId = log.id;
-        (clone.querySelector('.log-item-date') as HTMLElement).textContent = new Date(log.date).toLocaleDateString('en-AU', {
-          timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short'
-        });
-        (clone.querySelector('.log-item-hours') as HTMLElement).textContent = `${log.hours || 0} hrs`;
-        if (!log.is_planned) clone.querySelector('.log-badge.planned')?.remove();
-        if (log.notes) {
-          (clone.querySelector('.log-item-notes') as HTMLElement).textContent = log.notes;
-        } else {
-          clone.querySelector('.log-item-notes')?.remove();
-        }
-        const editBtn = clone.querySelector('.btn-edit') as HTMLButtonElement;
-        Object.assign(editBtn.dataset, {
-          id: log.id, date: log.date, hours: String(log.hours),
-          planned: String(log.is_planned), notes: log.notes || '',
-        });
-        const deleteBtn = clone.querySelector('.btn-delete') as HTMLButtonElement;
-        deleteBtn.dataset.id = log.id;
-        return logItem;
+      function el(tag: string, className: string, text?: string) {
+        const node = document.createElement(tag);
+        node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
       }
 
+      // Dates are 'YYYY-MM-DD'; parse as UTC so weekday/week maths never shifts by timezone.
+      function utcDate(iso: string) {
+        return new Date(`${iso}T00:00:00Z`);
+      }
+
+      function createEntryCard(log: PlannerLog) {
+        const d = utcDate(log.date);
+        const card = el('button', 'entry-card') as HTMLButtonElement;
+        card.type = 'button';
+        card.dataset.id = log.id;
+
+        const date = el('div', 'entry-date');
+        date.append(
+          el('span', 'entry-date-num', String(d.getUTCDate())),
+          el('span', 'entry-date-dow', d.toLocaleDateString('en-AU', { timeZone: 'UTC', weekday: 'short' })),
+        );
+
+        const body = el('div', 'entry-body');
+        const title = el('div', 'entry-title', log.kind === 'credit' ? 'Credit' : 'Ministry');
+        if (log.is_planned) title.append(el('span', 'entry-title-muted', ' · Planned'));
+        body.append(title);
+        if (log.notes) body.append(el('div', 'entry-notes', log.notes));
+
+        const amount = el('span', `entry-amount ${log.kind}${log.is_planned ? ' planned' : ''}`, `${log.hours || 0}h`);
+
+        card.append(date, body, amount);
+        return card;
+      }
+
+      function weekSummary(weekLogs: PlannerLog[]) {
+        const t: DayTotals = { actual: 0, planned: 0, credit: 0, creditPlanned: 0 };
+        weekLogs.forEach(log => { t[totalsKey(log)] += log.hours || 0; });
+        const parts: string[] = [];
+        if (t.actual) parts.push(`${t.actual}h logged`);
+        if (t.credit) parts.push(`${t.credit}h credit`);
+        if (t.planned + t.creditPlanned) parts.push(`${t.planned + t.creditPlanned}h planned`);
+        return parts.join(' · ');
+      }
+
+      // Entries grouped by Sunday-start week (matching the calendar), newest first.
       function renderLogList() {
         logListContainer.innerHTML = '';
         if (logs.length === 0) {
-          logListContainer.innerHTML = `<p style="color: #71717a;">No entries for this month.</p>`;
+          logListContainer.append(el('p', 'entries-empty', 'No entries for this month.'));
           return;
         }
-        const sortedLogs = [...logs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        sortedLogs.forEach(log => logListContainer.appendChild(createLogElement(log)));
+        const sorted = [...logs].sort((a, b) => b.date.localeCompare(a.date));
+        const weeks = new Map<string, PlannerLog[]>();
+        sorted.forEach(log => {
+          const d = utcDate(log.date);
+          d.setUTCDate(d.getUTCDate() - d.getUTCDay());
+          const key = d.toISOString().slice(0, 10);
+          if (!weeks.has(key)) weeks.set(key, []);
+          weeks.get(key)!.push(log);
+        });
+        weeks.forEach((weekLogs, weekStart) => {
+          const group = el('section', 'week-group');
+          const header = el('div', 'week-header');
+          header.append(
+            el('span', '', `Week of ${utcDate(weekStart).toLocaleDateString('en-AU', { timeZone: 'UTC', day: 'numeric', month: 'short' })}`),
+            el('span', 'week-header-total', weekSummary(weekLogs)),
+          );
+          group.append(header, ...weekLogs.map(createEntryCard));
+          logListContainer.append(group);
+        });
       }
 
+      const PILLS: [keyof DayTotals, string, string][] = [
+        ['actual', 'hours-actual', ''],
+        ['planned', 'hours-planned', 'P: '],
+        ['credit', 'hours-credit', 'C: '],
+        ['creditPlanned', 'hours-credit-planned', 'PC: '],
+      ];
+
       function updateDashboardAndCalendar() {
-        const hoursByDay: Record<number, { actual: number, planned: number }> = {};
-        let monthActual = 0;
-        let monthPlanned = 0;
+        const hoursByDay: Record<number, DayTotals> = {};
+        const month: DayTotals = { actual: 0, planned: 0, credit: 0, creditPlanned: 0 };
         logs.forEach(log => {
           const day = parseInt(log.date.split('-')[2], 10);
-          if (!hoursByDay[day]) hoursByDay[day] = { actual: 0, planned: 0 };
-          const hours = log.hours || 0;
-          if (log.is_planned) { hoursByDay[day].planned += hours; monthPlanned += hours; }
-          else { hoursByDay[day].actual += hours; monthActual += hours; }
+          if (!hoursByDay[day]) hoursByDay[day] = { actual: 0, planned: 0, credit: 0, creditPlanned: 0 };
+          const key = totalsKey(log);
+          hoursByDay[day][key] += log.hours || 0;
+          month[key] += log.hours || 0;
         });
-        monthActualValue.textContent = String(monthActual);
-        monthPlannedValue.textContent = String(monthPlanned);
+        monthTotalValue.textContent = String(month.actual + month.credit);
+        monthTotalSub.textContent = `${month.actual}h ministry · ${month.credit}h credit`;
+        monthPlannedValue.textContent = String(month.planned + month.creditPlanned);
+        monthPlannedSub.textContent = `${month.planned}h ministry · ${month.creditPlanned}h credit`;
         calendarGrid.querySelectorAll('.day-box[data-day]').forEach(dayBox => {
           const day = parseInt((dayBox as HTMLElement).dataset.day!, 10);
-          const data = hoursByDay[day] || { actual: 0, planned: 0 };
-          const dayNumberSpan = dayBox.querySelector('.day-number') as HTMLSpanElement;
-          if (!dayNumberSpan) return;
-          dayBox.querySelectorAll('.hours-actual, .hours-planned').forEach(el => el.remove());
-          let lastInsertedElement: HTMLElement = dayNumberSpan;
-          if (data.actual > 0) {
-            const actualEl = document.createElement('div');
-            actualEl.className = 'hours-actual';
-            actualEl.textContent = `${data.actual}h`;
-            lastInsertedElement.after(actualEl);
-            lastInsertedElement = actualEl;
-          }
-          if (data.planned > 0) {
-            const plannedEl = document.createElement('div');
-            plannedEl.className = 'hours-planned';
-            plannedEl.textContent = `P: ${data.planned}h`;
-            lastInsertedElement.after(plannedEl);
-          }
+          const data = hoursByDay[day];
+          if (!dayBox.querySelector('.day-number')) return;
+          dayBox.querySelectorAll('.hours-actual, .hours-planned, .hours-credit, .hours-credit-planned').forEach(n => n.remove());
+          if (!data) return;
+          PILLS.forEach(([key, className, prefix]) => {
+            if (data[key] > 0) dayBox.append(el('div', className, `${prefix}${data[key]}h`));
+          });
         });
       }
 
@@ -922,27 +930,35 @@ viewedMonthLogs?.forEach(log => {
         });
       }
 
-      function openEntryModal(dateStr: string) {
+      // Fill the form from an existing entry, or reset it for a new one.
+      function loadEntryIntoForm(entry: PlannerLog | undefined) {
+        editingLogId = entry?.id ?? null;
+        modalHours = entry?.hours || 0;
+        modalNotes.value = entry?.notes || '';
+        modalPlanned.checked = entry?.is_planned ?? false;
+        modalDeleteBtn.style.display = entry ? 'block' : 'none';
+        kindToggle.querySelectorAll<HTMLButtonElement>('.kind-option').forEach(btn => {
+          btn.setAttribute('aria-pressed', String(btn.dataset.kind === modalKind));
+        });
+        updateStepperDisplay();
+      }
+
+      // The sheet edits one entry of the selected kind for the date. A card tap passes
+      // its log id so that exact entry opens (a day can hold several entries).
+      function findEntryFor(kind: EntryKind) {
+        if (openedLog?.kind === kind) return openedLog;
+        return logs.find(log => log.date === selectedDate && (log.kind ?? 'hours') === kind);
+      }
+
+      function openEntryModal(dateStr: string, logId?: string) {
         selectedDate = dateStr;
-        editingLogId = null;
-        modalHours = 0;
-        modalNotes.value = '';
-        modalPlanned.checked = false;
-
-        const existing = logs.find(log => log.date === dateStr);
-        if (existing) {
-          editingLogId = existing.id;
-          modalHours = existing.hours || 0;
-          modalNotes.value = existing.notes || '';
-          modalPlanned.checked = existing.is_planned;
-        }
-
-        modalDeleteBtn.style.display = existing ? 'block' : 'none';
+        openedLog = (logId && logs.find(log => log.id === logId)) || null;
+        modalKind = openedLog?.kind ?? 'hours';
+        loadEntryIntoForm(findEntryFor(modalKind));
 
         modalDateLabel.textContent = new Date(dateStr).toLocaleDateString('en-AU', {
           timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'long', year: 'numeric'
         });
-        updateStepperDisplay();
         entryModalOverlay.classList.add('open');
         entryModal.classList.add('open');
       }
@@ -951,8 +967,17 @@ viewedMonthLogs?.forEach(log => {
         entryModalOverlay.classList.remove('open');
         entryModal.classList.remove('open');
         editingLogId = null;
+        openedLog = null;
         modalHours = 0;
       }
+
+      kindToggle.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.kind-option');
+        const kind = btn?.dataset.kind as EntryKind | undefined;
+        if (!kind || kind === modalKind) return;
+        modalKind = kind;
+        loadEntryIntoForm(findEntryFor(kind));
+      });
 
       // Expose selectDate globally for inline onclick handlers on day boxes
       (window as any).selectDate = function(dateStr: string) {
@@ -995,6 +1020,7 @@ viewedMonthLogs?.forEach(log => {
           hours: modalHours,
           notes: modalNotes.value,
           is_planned: modalPlanned.checked,
+          kind: modalKind,
         };
 
         let result;
@@ -1067,6 +1093,7 @@ viewedMonthLogs?.forEach(log => {
             .from('planner_logs')
             .select('date')
             .eq('is_planned', true)
+            .eq('kind', 'hours')
             .gte('date', `${currentYear}-01-01`)
             .lte('date', `${currentYear}-12-31`);
           if (!error && data) {
@@ -1170,10 +1197,12 @@ viewedMonthLogs?.forEach(log => {
         // Delete-then-insert (not upsert) — see design_handoff_visits_map_year_planning/HANDOFF.md §B1.
         // Only ever touches is_planned = true rows for the exact dates selected; actual logged hours
         // (is_planned = false) are never in scope, so they can never be overwritten by this.
+        // Year planning is for ministry hours only, so planned credit is never touched either.
         const { error: deleteError } = await supabase
           .from('planner_logs')
           .delete()
           .eq('is_planned', true)
+          .eq('kind', 'hours')
           .in('date', dates);
 
         if (deleteError) {
@@ -1184,7 +1213,7 @@ viewedMonthLogs?.forEach(log => {
 
         const { error: insertError } = await supabase
           .from('planner_logs')
-          .insert(dates.map(date => ({ date, hours: yearPlanHours, is_planned: true, notes: '' })));
+          .insert(dates.map(date => ({ date, hours: yearPlanHours, is_planned: true, notes: '', kind: 'hours' })));
 
         if (insertError) {
           showToast(`Error: ${insertError.message}`, 'error');
@@ -1199,17 +1228,14 @@ viewedMonthLogs?.forEach(log => {
         location.reload();
       });
 
-      // --- EVENT DELEGATION for Edit/Delete ---
+      // --- ENTRY CARDS: tap opens that entry in the day sheet (edit/delete live there) ---
       logListContainer.addEventListener('click', e => {
-        const target = e.target as HTMLElement;
-        const editBtn = target.closest('.btn-edit') as HTMLButtonElement;
-        const deleteBtn = target.closest('.btn-delete') as HTMLButtonElement;
-        if (editBtn) openEntryModal(editBtn.dataset.date || '');
-        if (deleteBtn) {
-          logIdToDelete = deleteBtn.dataset.id || null;
-          if (logIdToDelete) deleteModal.style.display = 'flex';
-        }
+        const card = (e.target as HTMLElement).closest<HTMLButtonElement>('.entry-card');
+        const log = card && logs.find(l => l.id === card.dataset.id);
+        if (log) openEntryModal(log.date, log.id);
       });
+
+      renderLogList();
 
       // --- DELETE MODAL ---
       function closeDeleteModal() {

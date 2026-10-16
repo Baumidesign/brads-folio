@@ -4,7 +4,7 @@
 
 ### Multi-user / adding users
 - **Now:** sign-in only (`/api/auth/signin`). No sign-up, invite, or password-reset flow. Users can only be added via Supabase dashboard → Authentication → Users.
-- **Check first:** `planner_logs` row-level security isn't in a migration, and `planner.astro` relies on it (its `user_id` filter is commented out). Confirm the policy exists in the live DB before adding a second user, or they may see other users' hours. `people`/`visits` are already owner-only.
+- **Privacy:** verified 2026-10-16. `planner_logs`, `people` and `visits` all have owner-only row-level security in the live DB, so a second user only sees their own data. (`planner_logs`' policies were created in the dashboard and aren't in a migration yet.)
 - **Decide:** self sign-up vs invite-only; fully private planners vs any sharing.
 
 ### Year planning: "Date range" and "Recurring" modes
@@ -15,7 +15,7 @@
 - Needs a map provider (MapLibre + MapTiler vs Mapbox) and a geocoding service chosen first.
 
 ### Housekeeping
-- Commit `supabase/migrations` properly (CLI-generated, timestamped); only `visits_people.sql` exists and the planned-per-day unique index isn't tracked.
+- Migrations: the repo is now linked to the Supabase "Planner" project and new changes use CLI migrations. Still to do: rename `visits_people.sql` to the timestamped format (the CLI skips it), and capture the dashboard-created `planner_logs` table and policies in a baseline migration. The planned-per-day unique index from the handoff was never created.
 - Handoff QA: RLS isolation with two users, empty states, long addresses, mobile Safari.
 - Remove prototype-only files once ported (`src/Prototype/` looks like an older copy of the handoff folder).
 
