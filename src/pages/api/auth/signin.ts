@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
-import { supabase } from '../../../lib/supabase';
+import { createRequestClient } from '../../../lib/supabase';
+import { setSessionCookies } from '../../../lib/session';
 
 export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   try {
@@ -11,7 +12,9 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
       return new Response('Email and password are required', { status: 400 });
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    // A fresh client per request — signing in on the shared singleton would leave
+    // this user's session in memory for every other request on a warm instance.
+    const { data, error } = await createRequestClient().auth.signInWithPassword({
       email,
       password,
     });
@@ -21,22 +24,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
       return redirect('/login?error=Invalid credentials. Please try again.');
     }
 
-    const { access_token, refresh_token, expires_in } = data.session;
-
-    // Set cookies for the session
-    cookies.set('sb-access-token', access_token, {
-      path: '/',
-      maxAge: Math.round(expires_in),
-      sameSite: 'lax',
-      secure: import.meta.env.PROD,
-    });
-    cookies.set('sb-refresh-token', refresh_token, {
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      sameSite: 'lax',
-      secure: import.meta.env.PROD,
-    });
-
+    setSessionCookies(cookies, data.session);
     return redirect('/planner');
   } catch (e) {
     console.error('SIGNIN_API_ERROR:', e);

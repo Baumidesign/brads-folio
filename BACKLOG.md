@@ -2,10 +2,12 @@
 
 ## Planner
 
-### Multi-user / adding users
-- **Now:** sign-in only (`/api/auth/signin`). No sign-up, invite, or password-reset flow. Users can only be added via Supabase dashboard → Authentication → Users.
+### Multi-user / adding users — invite-only, in progress
+- **Built (2026-10-17):** `/auth/confirm` set-password page for invite + reset links, forgot-password page, sign-in/sign-out on per-request clients. Invites are sent from the Supabase dashboard.
+- **To finish:** custom SMTP (Namecheap Private Email), Site URL + redirect URLs, Invite + Reset Password email templates, end-to-end test with a second email, then turn off public sign-up. Optional: DKIM + DMARC for `bradbaumi.com.au`.
+- **Later (optional):** in-app invite page for the admin (needs the service role key as a server-only env var).
 - **Privacy:** verified 2026-10-16. `planner_logs`, `people` and `visits` all have owner-only row-level security in the live DB, so a second user only sees their own data. (`planner_logs`' policies were created in the dashboard and aren't in a migration yet.)
-- **Decide:** self sign-up vs invite-only; fully private planners vs any sharing.
+- **Decided:** invite-only; each planner fully private.
 
 ### Year planning: "Date range" and "Recurring" modes
 - Only "Select days" exists. Remaining modes per `design_handoff_visits_map_year_planning/` (`yearplan.jsx`, HANDOFF.md Part B).

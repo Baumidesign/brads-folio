@@ -33,6 +33,7 @@ const error = Astro.url.searchParams.get('error');
     input { padding: 0.8rem; border-radius: 6px; border: 1px solid #3f3f46; background: #09090b; color: white; font-family: inherit; font-size: 1rem; }
     button { padding: 0.8rem; border-radius: 6px; border: none; background: #2563eb; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; }
     button:hover { background: #1d4ed8; }
+    .forgot-link { display: block; text-align: center; margin-top: 1.25rem; color: #60a5fa; font-size: 0.9rem; }
     .error-message { background: #ef444420; border: 1px solid #ef4444; color: #fca5a5; padding: 0.8rem; border-radius: 6px; text-align: center; margin-top: 1.5rem; }
   </style>
 </head>
@@ -50,6 +51,7 @@ const error = Astro.url.searchParams.get('error');
       </div>
       <button type="submit">Sign In</button>
     </form>
+    <a class="forgot-link" href="/forgot-password">Forgot password?</a>
     {error && <div class="error-message">{error}</div>}
   </div>
 </body>
