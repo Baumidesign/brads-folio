@@ -3,7 +3,7 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import { usePeople } from './usePeople';
-import { T, INTEREST, initials } from './tokens';
+import { T, INTEREST, INTEREST_GROUPS, interestGroup, initials, type InterestGroupKey } from './tokens';
 import { Avatar, Dots, PinGlyph } from './atoms';
 import { PersonSheet } from './PersonSheet';
 import { geocode, hasMapKey, lookupNear, mapStyleUrl, reverseGeocode } from '../../lib/geocode';
@@ -61,6 +61,14 @@ export function MapScreen() {
     person: Person; lat: number; lng: number; address: string; area: string;
   } | null>(null);
   const [locating, setLocating] = useState<{ done: number; total: number } | null>(null);
+  // Legend rows double as a filter: tap one to hide/show those pins.
+  const [hidden, setHidden] = useState<Set<InterestGroupKey>>(new Set());
+  const toggleGroup = (key: InterestGroupKey) =>
+    setHidden(h => {
+      const next = new Set(h);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
 
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -68,6 +76,7 @@ export function MapScreen() {
   const fittedRef = useRef(false);
 
   const pinned = people.filter(p => p.lat != null && p.lng != null);
+  const shown = pinned.filter(p => !hidden.has(interestGroup(p.interest)));
   const unpinned = people.filter(p => (p.lat == null || p.lng == null) && p.address?.trim());
   const selected = people.find(p => p.id === selectedId) ?? null;
 
@@ -95,7 +104,7 @@ export function MapScreen() {
     const map = mapRef.current;
     if (!map) return;
     markersRef.current.forEach(m => m.remove());
-    markersRef.current = pinned
+    markersRef.current = shown
       // selected and high-interest pins last, so they draw on top
       .sort((a, b) => Number(a.id === selectedId) - Number(b.id === selectedId) || a.interest - b.interest)
       .map(p => {
@@ -111,7 +120,12 @@ export function MapScreen() {
       fittedRef.current = true;
       fitTo(pinned.map(p => [p.lng!, p.lat!]), false);
     }
-  }, [people, selectedId, loading]);
+  }, [people, selectedId, loading, hidden]);
+
+  // Hiding a group also closes the card of a person in it.
+  useEffect(() => {
+    if (selected && hidden.has(interestGroup(selected.interest))) setSelectedId(null);
+  }, [hidden]);
 
   function fitTo(points: [number, number][], animate: boolean) {
     const map = mapRef.current;
@@ -219,7 +233,9 @@ export function MapScreen() {
 
   const subtitle = loading
     ? 'Loading…'
-    : `${pinned.length} on the map · pins coloured by interest`;
+    : hidden.size
+      ? `Showing ${shown.length} of ${pinned.length} · tap the key to filter`
+      : `${pinned.length} on the map · tap the key to filter`;
 
   return (
     <div style={{ position: 'fixed', inset: `0 0 ${NAV_HEIGHT}px 0`, background: '#0C0C0E', fontFamily: T.font }}>
@@ -238,14 +254,32 @@ export function MapScreen() {
         <div style={{ fontSize: 14, color: '#C5C5CA', textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>{subtitle}</div>
       </div>
 
-      {/* legend */}
-      <div style={{ position: 'absolute', right: 14, top: 16, zIndex: 40, background: 'rgba(20,20,22,0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderRadius: 14, padding: '10px 12px', border: '1px solid ' + T.line }}>
-        {[{ c: T.red, l: 'High' }, { c: T.orange, l: 'Medium' }, { c: T.blue, l: 'Low' }].map(x => (
-          <div key={x.l} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
-            <span style={{ width: 11, height: 11, borderRadius: 11, background: x.c }} />
-            <span style={{ fontSize: 12.5, color: '#C5C5CA' }}>{x.l}</span>
-          </div>
-        ))}
+      {/* legend + filter */}
+      <div style={{ position: 'absolute', right: 14, top: 16, zIndex: 40, background: 'rgba(20,20,22,0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderRadius: 14, padding: '4px 4px', border: '1px solid ' + T.line }}>
+        {INTEREST_GROUPS.map(g => {
+          const off = hidden.has(g.key);
+          const count = pinned.filter(p => interestGroup(p.interest) === g.key).length;
+          return (
+            <button
+              key={g.key}
+              type="button"
+              onClick={() => toggleGroup(g.key)}
+              aria-pressed={!off}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, width: '100%', minHeight: 32,
+                padding: '4px 8px', background: 'none', border: 'none', cursor: 'pointer',
+                fontFamily: T.font, opacity: off ? 0.4 : 1, touchAction: 'manipulation',
+              }}
+            >
+              <span style={{
+                width: 11, height: 11, borderRadius: 11, flexShrink: 0, boxSizing: 'border-box',
+                background: off ? 'transparent' : g.color, border: `2px solid ${g.color}`,
+              }} />
+              <span style={{ fontSize: 13, color: '#E5E5EA', flex: 1, textAlign: 'left', textDecoration: off ? 'line-through' : 'none' }}>{g.label}</span>
+              <span style={{ fontSize: 12, color: T.text2, minWidth: 14, textAlign: 'right' }}>{count}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* contacts without a location */}
@@ -255,7 +289,7 @@ export function MapScreen() {
           onClick={locateAll}
           disabled={!!locating}
           style={{
-            position: 'absolute', left: 14, right: 90, top: 96, zIndex: 40,
+            position: 'absolute', left: 14, right: 90, top: 136, zIndex: 40,
             background: 'rgba(20,20,22,0.9)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
             border: '1px solid ' + T.line, borderRadius: 14, padding: '10px 12px',
             color: T.white, fontFamily: T.font, fontSize: 13.5, textAlign: 'left', cursor: 'pointer',
@@ -268,7 +302,7 @@ export function MapScreen() {
       )}
 
       {(loadError || notice) && (
-        <div style={{ position: 'absolute', left: 14, right: 14, top: 96, zIndex: 45, background: T.card, border: '1px solid ' + T.line, borderRadius: 14, padding: '10px 12px', color: T.text2, fontSize: 13.5 }}>
+        <div style={{ position: 'absolute', left: 14, right: 14, top: 136, zIndex: 45, background: T.card, border: '1px solid ' + T.line, borderRadius: 14, padding: '10px 12px', color: T.text2, fontSize: 13.5 }}>
           {loadError ?? notice}
         </div>
       )}
@@ -363,7 +397,7 @@ export function MapScreen() {
             <path d="M18 1C8.6 1 1 8.6 1 18c0 12.5 17 29 17 29s17-16.5 17-29C35 8.6 27.4 1 18 1z" fill={T.blue} stroke="#fff" strokeWidth="2.5" />
             <circle cx="18" cy="18" r="5.5" fill="#fff" />
           </svg>
-          <div style={{ position: 'absolute', left: 14, right: 14, top: 96, zIndex: 45, background: T.card, border: '1px solid ' + T.line, borderRadius: 14, padding: '10px 12px', color: T.white, fontSize: 14 }}>
+          <div style={{ position: 'absolute', left: 14, right: 14, top: 136, zIndex: 45, background: T.card, border: '1px solid ' + T.line, borderRadius: 14, padding: '10px 12px', color: T.white, fontSize: 14 }}>
             {placing.mode === 'move' ? `Move the map so the pin sits on ${placing.person.name}'s house.` : 'Move the map so the pin sits on the house.'}
           </div>
           <div style={{ position: 'absolute', left: 14, right: 14, bottom: 40, zIndex: 60, display: 'flex', gap: 10 }}>

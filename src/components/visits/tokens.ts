@@ -16,13 +16,28 @@ export const T = {
   font:    '-apple-system, "SF Pro Text", system-ui, sans-serif',
 } as const;
 
+// tempColor is the map pin colour: green = worth visiting, amber = curious,
+// grey = not now (fades into the map so the others stand out).
 export const INTEREST: Record<number, { label: string; short: string; tempColor: string }> = {
-  5: { label: 'Very interested', short: 'Very',     tempColor: '#FF453A' },
-  4: { label: 'Interested',      short: 'Keen',     tempColor: '#FF453A' },
+  5: { label: 'Very interested', short: 'Very',     tempColor: '#30D158' },
+  4: { label: 'Interested',      short: 'Keen',     tempColor: '#30D158' },
   3: { label: 'Curious',         short: 'Curious',  tempColor: '#FF9F0A' },
-  2: { label: 'Lukewarm',        short: 'Lukewarm', tempColor: '#2F6BFF' },
-  1: { label: 'Not now',         short: 'Not now',  tempColor: '#2F6BFF' },
+  2: { label: 'Lukewarm',        short: 'Lukewarm', tempColor: '#8E8E93' },
+  1: { label: 'Not now',         short: 'Not now',  tempColor: '#8E8E93' },
 };
+
+// Map legend groups (and filter), in the app's own words.
+export const INTEREST_GROUPS = [
+  { key: 'interested', label: 'Interested', color: '#30D158', has: (i: number) => i >= 4 },
+  { key: 'curious',    label: 'Curious',    color: '#FF9F0A', has: (i: number) => i === 3 },
+  { key: 'notnow',     label: 'Not now',    color: '#8E8E93', has: (i: number) => i <= 2 },
+] as const;
+
+export type InterestGroupKey = typeof INTEREST_GROUPS[number]['key'];
+
+export function interestGroup(i: number): InterestGroupKey {
+  return (INTEREST_GROUPS.find(g => g.has(i)) ?? INTEREST_GROUPS[2]).key;
+}
 
 export function initials(name: string): string {
   const clean = name
