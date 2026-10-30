@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getBrowserSession } from '../../lib/browserSession';
 import { T } from './tokens';
 import { PersonCard } from './PersonCard';
 import { PersonSheet } from './PersonSheet';
@@ -9,16 +10,35 @@ interface SheetState {
   isNew: boolean;
 }
 
-interface VisitsScreenProps {
-  people: Person[];
-  userId: string;
-  accessToken: string;
-}
-
-export function VisitsScreen({ people: initial, userId, accessToken }: VisitsScreenProps) {
-  const [people, setPeople] = useState<Person[]>(initial);
+// The page is static; the session and people list load here in the browser,
+// straight from Supabase, instead of on the (far-away) Netlify function.
+export function VisitsScreen() {
+  const [session, setSession] = useState<{ userId: string; accessToken: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [people, setPeople] = useState<Person[]>([]);
   const [query, setQuery]   = useState('');
   const [sheet, setSheet]   = useState<SheetState | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const s = await getBrowserSession();
+      if (!s) return; // redirecting to /login
+      setSession({ userId: s.userId, accessToken: s.accessToken });
+      const { data, error } = await s.db
+        .from('people_with_last_visit')
+        .select('*')
+        .order('interest',        { ascending: false })
+        .order('last_visit_date', { ascending: false, nullsFirst: false });
+      if (error) {
+        console.error('VISITS_FETCH_ERROR:', error);
+        setLoadError("Couldn't load your contacts. Reload the page to try again.");
+      } else {
+        setPeople(data ?? []);
+      }
+      setLoading(false);
+    })();
+  }, []);
 
   const filtered = people.filter(p =>
     !query || (p.name + ' ' + p.address).toLowerCase().includes(query.toLowerCase())
@@ -49,7 +69,7 @@ export function VisitsScreen({ people: initial, userId, accessToken }: VisitsScr
           Visits
         </h1>
         <div style={{ fontSize: 14, color: T.text2, marginBottom: 16 }}>
-          {people.length} {people.length === 1 ? 'contact' : 'contacts'} · sorted by interest
+          {loading ? 'Loading…' : `${people.length} ${people.length === 1 ? 'contact' : 'contacts'} · sorted by interest`}
         </div>
       </div>
 
@@ -85,7 +105,13 @@ export function VisitsScreen({ people: initial, userId, accessToken }: VisitsScr
 
       {/* list */}
       <div style={{ padding: '0 16px 120px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {filtered.length === 0 && people.length === 0 && (
+        {loading && [0, 1, 2].map(i => (
+          <div key={i} style={{ height: 76, borderRadius: 16, background: T.control, opacity: 0.5 }} />
+        ))}
+        {loadError && (
+          <div style={{ textAlign: 'center', color: T.text2, fontSize: 15, padding: '40px 0' }}>{loadError}</div>
+        )}
+        {!loading && !loadError && filtered.length === 0 && people.length === 0 && (
           <div style={{ textAlign: 'center', color: T.text3, fontSize: 15, padding: '60px 0' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>👥</div>
             <div style={{ fontWeight: 600, color: T.text2, marginBottom: 6 }}>No contacts yet</div>
@@ -103,7 +129,7 @@ export function VisitsScreen({ people: initial, userId, accessToken }: VisitsScr
       </div>
 
       {/* FAB */}
-      {!sheet && (
+      {!sheet && session && (
         <button
           onClick={openNew}
           style={{
@@ -120,12 +146,12 @@ export function VisitsScreen({ people: initial, userId, accessToken }: VisitsScr
       )}
 
       {/* sheet (Phase 4) */}
-      {sheet && (
+      {sheet && session && (
         <PersonSheet
           person={sheet.person}
           isNew={sheet.isNew}
-          userId={userId}
-          accessToken={accessToken}
+          userId={session.userId}
+          accessToken={session.accessToken}
           onSave={handleSave}
           onDelete={handleDelete}
           onClose={() => setSheet(null)}

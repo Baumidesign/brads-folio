@@ -1,63 +1,11 @@
 ---
-import { setSessionCookies } from '../../lib/session';
-import { supabase, createRequestClient, decodeAccessToken } from '../../lib/supabase';
 import BottomNav from '../../components/BottomNav.astro';
 import { VisitsScreen } from '../../components/visits/VisitsScreen';
 
-// --- 1. AUTHENTICATION GUARD ---
-const accessToken  = Astro.cookies.get('sb-access-token')?.value;
-const refreshToken = Astro.cookies.get('sb-refresh-token')?.value;
-
-if (!accessToken || !refreshToken) {
-  return Astro.redirect('/login');
-}
-
-const claims = decodeAccessToken(accessToken);
-const nowSeconds = Date.now() / 1000;
-
-let user: { id: string; email?: string };
-let sessionAccessToken = accessToken;
-
-if (claims?.exp && claims.exp > nowSeconds + 30) {
-  // Token is still valid — skip the network round trip to Supabase's Auth API.
-  user = { id: claims.sub, email: claims.email };
-} else {
-  // Expired (or undecodable) — refresh via a scoped client, never the shared singleton.
-  let refreshData, refreshError;
-  try {
-    ({ data: refreshData, error: refreshError } = await createRequestClient().auth.refreshSession({
-      refresh_token: refreshToken,
-    }));
-  } catch (e) {
-    console.error('VISITS_PAGE_SUPABASE_ERROR:', e);
-    Astro.cookies.delete('sb-access-token', { path: '/' });
-    Astro.cookies.delete('sb-refresh-token', { path: '/' });
-    return Astro.redirect('/login?error=Server configuration error.');
-  }
-
-  if (refreshError || !refreshData.session || !refreshData.user) {
-    Astro.cookies.delete('sb-access-token', { path: '/' });
-    Astro.cookies.delete('sb-refresh-token', { path: '/' });
-    return Astro.redirect('/login');
-  }
-
-  sessionAccessToken = refreshData.session.access_token;
-  user = refreshData.user;
-  setSessionCookies(Astro.cookies, refreshData.session);
-}
-
-const db = createRequestClient(sessionAccessToken);
-
-// --- 2. DATA FETCH ---
-const { data: people, error: fetchError } = await db
-  .from('people_with_last_visit')
-  .select('*')
-  .order('interest',        { ascending: false })
-  .order('last_visit_date', { ascending: false, nullsFirst: false });
-
-if (fetchError) {
-  console.error('VISITS_FETCH_ERROR:', fetchError);
-}
+// Static page served from Netlify's CDN. Auth and data loading happen in the
+// browser (see src/lib/browserSession.ts), which skips a slow round trip
+// through the US-based Netlify function on every visit.
+export const prerender = true;
 ---
 
 <html lang="en">
@@ -78,12 +26,7 @@ if (fetchError) {
   </style>
 </head>
 <body>
-  <VisitsScreen
-    client:load
-    people={people ?? []}
-    userId={user.id}
-    accessToken={sessionAccessToken}
-  />
+  <VisitsScreen client:load />
   <BottomNav />
 </body>
 </html>
