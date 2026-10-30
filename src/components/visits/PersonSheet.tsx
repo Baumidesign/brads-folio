@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { T } from './tokens';
 import { Avatar, InterestControl, Label, PinGlyph } from './atoms';
 import type { Person } from './types';
+import { geocode, hasMapKey } from '../../lib/geocode';
 
 interface VisitDraft {
   id: string;
@@ -132,15 +133,31 @@ export function PersonSheet({ person, isNew, userId, accessToken, onSave, onDele
 
   const visibleVisits = visits.filter(v => !v.isDeleted);
 
+  // Look the address up for the map when it's new or changed, or when this
+  // person has no location yet. Returns the lat/lng fields to save, or {} to
+  // leave them as they are.
+  const locationFields = async (): Promise<{ lat?: number | null; lng?: number | null }> => {
+    if (!hasMapKey) return {};
+    const address = draft.address.trim();
+    const changed = isNew || address !== (person?.address ?? '').trim();
+    if (!changed && person?.lat != null) return {};
+    if (!address) return { lat: null, lng: null };
+    const found = await geocode(address);
+    if (found) return found;
+    return changed ? { lat: null, lng: null } : {}; // never keep a pin for an old address
+  };
+
   const handleSave = async () => {
     if (!draft.name.trim()) { setError('Name is required.'); return; }
     setSaving(true);
     setError(null);
 
+    const location = await locationFields();
+
     if (isNew) {
       const { data: newPerson, error: insertErr } = await supabase
         .from('people')
-        .insert({ ...draft, user_id: userId })
+        .insert({ ...draft, ...location, user_id: userId })
         .select()
         .single();
 
@@ -172,7 +189,7 @@ export function PersonSheet({ person, isNew, userId, accessToken, onSave, onDele
     } else {
       const { data: updatedPerson, error: updateErr } = await supabase
         .from('people')
-        .update(draft)
+        .update({ ...draft, ...location })
         .eq('id', person!.id)
         .select()
         .single();

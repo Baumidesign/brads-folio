@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
-import { getBrowserSession } from '../../lib/browserSession';
-import { startNavProgress, finishNavProgress } from '../../lib/navProgress';
+import { useState } from 'react';
+import { usePeople } from './usePeople';
 import { T } from './tokens';
 import { PersonCard } from './PersonCard';
 import { PersonSheet } from './PersonSheet';
@@ -14,34 +13,9 @@ interface SheetState {
 // The page is static; the session and people list load here in the browser,
 // straight from Supabase, instead of on the (far-away) Netlify function.
 export function VisitsScreen() {
-  const [session, setSession] = useState<{ userId: string; accessToken: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [people, setPeople] = useState<Person[]>([]);
+  const { session, loading, loadError, people, upsertPerson, removePerson } = usePeople();
   const [query, setQuery]   = useState('');
   const [sheet, setSheet]   = useState<SheetState | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      startNavProgress(35); // keep the loading bar going until the list is in
-      const s = await getBrowserSession();
-      if (!s) return; // redirecting to /login
-      setSession({ userId: s.userId, accessToken: s.accessToken });
-      const { data, error } = await s.db
-        .from('people_with_last_visit')
-        .select('*')
-        .order('interest',        { ascending: false })
-        .order('last_visit_date', { ascending: false, nullsFirst: false });
-      if (error) {
-        console.error('VISITS_FETCH_ERROR:', error);
-        setLoadError("Couldn't load your contacts. Reload the page to try again.");
-      } else {
-        setPeople(data ?? []);
-      }
-      setLoading(false);
-      finishNavProgress();
-    })();
-  }, []);
 
   const filtered = people.filter(p =>
     !query || (p.name + ' ' + p.address).toLowerCase().includes(query.toLowerCase())
@@ -51,16 +25,12 @@ export function VisitsScreen() {
   const openNew    = () => setSheet({ person: null, isNew: true });
 
   const handleSave = (saved: Person) => {
-    setPeople(ps =>
-      ps.some(p => p.id === saved.id)
-        ? ps.map(p => p.id === saved.id ? saved : p)
-        : [saved, ...ps]
-    );
+    upsertPerson(saved);
     setSheet(null);
   };
 
   const handleDelete = (id: string) => {
-    setPeople(ps => ps.filter(p => p.id !== id));
+    removePerson(id);
     setSheet(null);
   };
 

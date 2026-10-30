@@ -1,0 +1,32 @@
+---
+import BottomNav from '../../components/BottomNav.astro';
+import { MapScreen } from '../../components/visits/MapScreen';
+
+// Static page served from Netlify's CDN; the session, people and map tiles
+// all load in the browser (same approach as visits.astro).
+export const prerender = true;
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Map</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    body {
+      background: #0C0C0E;
+      color: #ffffff;
+      font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- client:only: MapLibre needs the browser (window/WebGL) to render -->
+  <MapScreen client:only="react" />
+  <BottomNav />
+</body>
+</html>
