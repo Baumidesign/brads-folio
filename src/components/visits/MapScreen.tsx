@@ -6,7 +6,7 @@ import { usePeople } from './usePeople';
 import { T, INTEREST, initials } from './tokens';
 import { Avatar, Dots, PinGlyph } from './atoms';
 import { PersonSheet } from './PersonSheet';
-import { geocode, hasMapKey, mapStyleUrl } from '../../lib/geocode';
+import { geocode, hasMapKey, lookupNear, mapStyleUrl } from '../../lib/geocode';
 import type { Person } from './types';
 
 // MapLibre finds its worker relative to its own file, which breaks once
@@ -119,8 +119,9 @@ export function MapScreen() {
     setLocating({ done: 0, total: todo.length });
     let found = 0;
     const points: [number, number][] = pinned.map(p => [p.lng!, p.lat!]);
+    const near = await lookupNear(); // once for the whole batch
     for (const [i, p] of todo.entries()) {
-      const c = await geocode(p.address);
+      const c = await geocode(p.address, p.area, near);
       if (c) {
         const { error } = await db.from('people').update(c).eq('id', p.id);
         if (!error) {
@@ -233,7 +234,7 @@ export function MapScreen() {
             <Dots value={selected.interest} />
             {/* Opens the Google Maps app on iPhone if installed, otherwise the website */}
             <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selected.address?.trim() || `${selected.lat},${selected.lng}`)}`}
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selected.address?.trim() ? [selected.address.trim(), selected.area?.trim(), 'SA'].filter(Boolean).join(', ') : `${selected.lat},${selected.lng}`)}`}
               target="_blank"
               rel="noopener"
               onClick={e => e.stopPropagation()}
