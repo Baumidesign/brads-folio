@@ -4,6 +4,15 @@ import { getBrowserSession } from '../../lib/browserSession';
 import { startNavProgress, finishNavProgress } from '../../lib/navProgress';
 import type { Person } from './types';
 
+// Most interested first; within the same interest, most recently visited
+// first (never-visited last). Matches the database query's order.
+export function sortPeople(ps: Person[]): Person[] {
+  return [...ps].sort((a, b) =>
+    b.interest - a.interest
+    || (b.last_visit_date ?? '').localeCompare(a.last_visit_date ?? '')
+  );
+}
+
 // Loads the session and the people list in the browser (shared by the
 // Visits and Map screens, which are static pages).
 export function usePeople() {
@@ -36,13 +45,14 @@ export function usePeople() {
     })();
   }, []);
 
-  // Apply the result of a save/delete from PersonSheet.
+  // Apply the result of a save/delete from PersonSheet, re-sorting so a
+  // change of interest moves the person to the right place in the list.
   const upsertPerson = (saved: Person) =>
-    setPeople(ps =>
+    setPeople(ps => sortPeople(
       ps.some(p => p.id === saved.id)
         ? ps.map(p => p.id === saved.id ? saved : p)
         : [saved, ...ps]
-    );
+    ));
   const removePerson = (id: string) => setPeople(ps => ps.filter(p => p.id !== id));
 
   return { session, db, loading, loadError, people, setPeople, upsertPerson, removePerson };
