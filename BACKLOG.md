@@ -5,7 +5,7 @@
 ### Multi-user / adding users — invite-only, in progress
 - **Built (2026-10-17):** `/auth/confirm` set-password page for invite + reset links, forgot-password page, sign-in/sign-out on per-request clients. Invites are sent from the Supabase dashboard.
 - **Done in Supabase:** custom SMTP, redirect URLs.
-- **To finish:** confirm Site URL is `https://bradbaumi.com.au` (not `/planner`), Invite + Reset Password email templates, end-to-end test with a second email, then turn off public sign-up. Optional: DKIM + DMARC for `bradbaumi.com.au`.
+- **To finish:** confirm Site URL is `https://bradbaumi.com.au` (not `/planner`), Invite + Reset Password email templates, end-to-end test with a second email. (Public sign-up turned off 2026-10-30, verified.) Optional: DKIM + DMARC for `bradbaumi.com.au`.
 - **Later (optional):** in-app invite page for the admin (needs the service role key as a server-only env var).
 - **Privacy:** verified 2026-10-16. `planner_logs`, `people` and `visits` all have owner-only row-level security in the live DB, so a second user only sees their own data. (`planner_logs`' policies were created in the dashboard and aren't in a migration yet.)
 - **Decided:** invite-only; each planner fully private.
