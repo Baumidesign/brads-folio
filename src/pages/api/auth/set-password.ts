@@ -45,7 +45,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     }
 
     setSessionCookies(cookies, data.session);
-    return redirect('/planner');
+    return redirect('/planner/');
   } catch (e) {
     console.error('SET_PASSWORD_API_ERROR:', e);
     return redirect('/login?error=Server authentication error. Please try again.');

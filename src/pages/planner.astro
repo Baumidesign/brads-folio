@@ -1,104 +1,11 @@
 ---
-import { setSessionCookies } from '../lib/session';
-import { supabase, createRequestClient, decodeAccessToken } from '../lib/supabase';
 import SignOut from '../components/SignOut.astro';
 import BottomNav from '../components/BottomNav.astro';
 
-// --- 1. AUTHENTICATION GUARD ---
-const accessToken = Astro.cookies.get('sb-access-token')?.value;
-const refreshToken = Astro.cookies.get('sb-refresh-token')?.value;
-
-if (!accessToken || !refreshToken) {
-  return Astro.redirect('/login');
-}
-
-const claims = decodeAccessToken(accessToken);
-const nowSeconds = Date.now() / 1000;
-
-let user: { id: string; email?: string };
-let sessionAccessToken = accessToken;
-
-if (claims?.exp && claims.exp > nowSeconds + 30) {
-  // Token is still valid — skip the network round trip to Supabase's Auth API.
-  user = { id: claims.sub, email: claims.email };
-} else {
-  // Expired (or undecodable) — refresh via a scoped client, never the shared singleton.
-  let refreshData, refreshError;
-  try {
-    ({ data: refreshData, error: refreshError } = await createRequestClient().auth.refreshSession({
-      refresh_token: refreshToken,
-    }));
-  } catch (e) {
-    console.error('PLANNER_PAGE_SUPABASE_ERROR:', e);
-    // This error is likely due to server misconfiguration (missing env vars).
-    // Clear cookies and redirect to login to prevent a redirect loop.
-    Astro.cookies.delete('sb-access-token', { path: '/' });
-    Astro.cookies.delete('sb-refresh-token', { path: '/' });
-    return Astro.redirect('/login?error=Server configuration error.');
-  }
-
-  if (refreshError || !refreshData.session || !refreshData.user) {
-    Astro.cookies.delete('sb-access-token', { path: '/' });
-    Astro.cookies.delete('sb-refresh-token', { path: '/' });
-    return Astro.redirect('/login');
-  }
-
-  sessionAccessToken = refreshData.session.access_token;
-  user = refreshData.user;
-  setSessionCookies(Astro.cookies, refreshData.session);
-}
-
-const db = createRequestClient(sessionAccessToken);
-// --- 2. CALENDAR & NAVIGATION LOGIC ---
-const urlMonth = Astro.url.searchParams.get('month');
-const urlYear = Astro.url.searchParams.get('year');
-
-const now = new Date();
-const currentYear = urlYear !== null ? parseInt(urlYear) : now.getFullYear();
-const currentMonth = urlMonth !== null ? parseInt(urlMonth) : now.getMonth();
-
-const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
-const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
-
-const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-const monthName = new Date(currentYear, currentMonth, 1).toLocaleString('default', { month: 'long' });
-
-const isCurrentMonth = now.getMonth() === currentMonth && now.getFullYear() === currentYear;
-const defaultDate = isCurrentMonth 
-  ? now.toISOString().split('T')[0] 
-  : `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
-
-// --- 3. DATA FETCHING (USER & MONTH SPECIFIC) ---
-const firstDayOfMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
-const lastDayOfMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
-
-const { data: viewedMonthLogs } = await db
-  .from('planner_logs')
-  .select('*')
-  // .eq('user_id', user.id) // This filter is now handled by RLS, but can be kept for clarity.
-  .gte('date', firstDayOfMonth)
-  .lte('date', lastDayOfMonth)
-  .order('date', { ascending: false });
-
-// --- 4. CALCULATE TOTALS ---
-// Keep in sync with summarizeLogs() in the client script below.
-type DayTotals = { actual: number, planned: number, credit: number, creditPlanned: number };
-const hoursByDay: Record<number, DayTotals> = {};
-const month: DayTotals = { actual: 0, planned: 0, credit: 0, creditPlanned: 0 };
-
-viewedMonthLogs?.forEach(log => {
-  const day = parseInt(log.date.split('-')[2], 10);
-  if (!hoursByDay[day]) hoursByDay[day] = { actual: 0, planned: 0, credit: 0, creditPlanned: 0 };
-  const key: keyof DayTotals = log.kind === 'credit'
-    ? (log.is_planned ? 'creditPlanned' : 'credit')
-    : (log.is_planned ? 'planned' : 'actual');
-  hoursByDay[day][key] += log.hours || 0;
-  month[key] += log.hours || 0;
-});
-
+// Static page served from Netlify's CDN. Auth, the month grid and the data
+// all load in the browser (see the script below and src/lib/browserSession.ts),
+// which skips a slow round trip through the US-based Netlify function.
+export const prerender = true;
 ---
 
 <html lang="en">
@@ -124,10 +31,11 @@ viewedMonthLogs?.forEach(log => {
 
     .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: bold; font-size: 0.75rem; color: #71717a; margin-bottom: 5px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: #27272a; border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
-    .day-box { background: #18181b; min-height: 70px; padding: 5px; cursor: pointer; transition: 0.2s; }
-    .day-number { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 0.75rem; color: #8b8b93; font-weight: 400; }
-    .day-number.today { background: #2563eb; color: #fff; font-weight: 700; }
-    .day-box:hover { background: #27272a; }
+    /* Day boxes are built by client JS (renderCalendarGrid), hence :global() */
+    :global(.day-box) { background: #18181b; min-height: 70px; padding: 5px; cursor: pointer; transition: 0.2s; }
+    :global(.day-number) { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 0.75rem; color: #8b8b93; font-weight: 400; }
+    :global(.day-number.today) { background: #2563eb; color: #fff; font-weight: 700; }
+    :global(.day-box:hover) { background: #27272a; }
     /* These classes are applied to elements created in client-side JS.
        Using :global() prevents Astro from scoping them with a data-astro-cid attribute,
        ensuring the styles apply to our dynamically generated divs. */
@@ -268,7 +176,7 @@ viewedMonthLogs?.forEach(log => {
       .stat-value {
         font-size: 2rem;
       }
-      .day-box {
+      :global(.day-box) {
         min-height: 60px; /* Slightly smaller day boxes */
       }
       .modal-content {
@@ -546,13 +454,7 @@ viewedMonthLogs?.forEach(log => {
     #yearPlanSubmitBtn:disabled { background: #27272a; color: #71717a; cursor: default; }
   </style>
 </head>
-<body
-  data-access-token={sessionAccessToken}
-  data-logs={JSON.stringify(viewedMonthLogs || [])}
-  data-default-date={defaultDate}
-  data-current-year={currentYear}
-  data-current-month={currentMonth}
->
+<body>
 
   <div id="toast-container" class="toast-container"></div>
 
@@ -562,24 +464,24 @@ viewedMonthLogs?.forEach(log => {
 
   <div class="container">
     <div class="month-nav">
-      <button type="button" onclick={`window.__showNavProgress && window.__showNavProgress(); window.location.search='?month=${prevMonth}&year=${prevYear}'`}>&larr; Prev</button>
+      <button type="button" id="prevMonthBtn">&larr; Prev</button>
       <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
-        {monthName} {currentYear}
-        {!isCurrentMonth && <button type="button" onclick="window.__showNavProgress && window.__showNavProgress(); window.location.search=''" style="font-size: 0.7rem; background: #2563eb; padding: 4px 8px; border-radius: 4px;">Today</button>}
+        <span id="monthLabel">&nbsp;</span>
+        <button type="button" id="todayBtn" hidden style="font-size: 0.7rem; background: #2563eb; padding: 4px 8px; border-radius: 4px;">Today</button>
       </h2>
-      <button type="button" onclick={`window.__showNavProgress && window.__showNavProgress(); window.location.search='?month=${nextMonth}&year=${nextYear}'`}>Next &rarr;</button>
+      <button type="button" id="nextMonthBtn">Next &rarr;</button>
     </div>
     
     <div class="dashboard">
       <div class="stat-card actual">
         <div class="stat-label">Total Hours</div>
-        <div id="monthTotalValue" class="stat-value">{month.actual + month.credit}</div>
-        <div id="monthTotalSub" class="stat-sub">{month.actual}h ministry · {month.credit}h credit</div>
+        <div id="monthTotalValue" class="stat-value">–</div>
+        <div id="monthTotalSub" class="stat-sub">&nbsp;</div>
       </div>
       <div class="stat-card planned">
         <div class="stat-label">Planned</div>
-        <div id="monthPlannedValue" class="stat-value">{month.planned + month.creditPlanned}</div>
-        <div id="monthPlannedSub" class="stat-sub">{month.planned}h ministry · {month.creditPlanned}h credit</div>
+        <div id="monthPlannedValue" class="stat-value">–</div>
+        <div id="monthPlannedSub" class="stat-sub">&nbsp;</div>
       </div>
     </div>
 
@@ -591,26 +493,11 @@ viewedMonthLogs?.forEach(log => {
     <div class="calendar-header">
       <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
     </div>
-    <div class="calendar-grid" id="calendarGrid">
-      {Array.from({ length: firstDayIndex }).map(() => <div class="day-box" style="background: #09090b; cursor: default;"></div>)}
-      {Array.from({ length: daysInMonth }).map((_, i) => {
-        const day = i + 1;
-        const data = hoursByDay[day];
-        const isToday = isCurrentMonth && day === now.getDate();
-        return (
-          <div class="day-box" data-day={day} onclick={`selectDate('${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}')`}>
-            <span class={`day-number${isToday ? ' today' : ''}`}>{day}</span>
-            {data?.actual > 0 && <div class="hours-actual">{data.actual}h</div>}
-            {data?.planned > 0 && <div class="hours-planned">P: {data.planned}h</div>}
-            {data?.credit > 0 && <div class="hours-credit">C: {data.credit}h</div>}
-            {data?.creditPlanned > 0 && <div class="hours-credit-planned">PC: {data.creditPlanned}h</div>}
-          </div>
-        )
-      })}
-    </div>
+    <!-- Day boxes are built client-side by renderCalendarGrid() -->
+    <div class="calendar-grid" id="calendarGrid"></div>
 
     <div style="margin-top: 2rem;">
-      <h3>Entries for {monthName}</h3>
+      <h3>Entries for <span id="entriesMonth"></span></h3>
       <!-- Week-grouped entry cards are rendered client-side by renderLogList() -->
       <div id="logListContainer"></div>
     </div>
@@ -673,7 +560,7 @@ viewedMonthLogs?.forEach(log => {
   <div id="yearPlanSheet" class="entry-modal year-plan-sheet">
     <div class="entry-modal-grabber"><div></div></div>
     <div class="entry-modal-header">
-      <h3 style="margin: 0; font-size: 1.1rem; font-weight: bold;">Plan hours for {currentYear}</h3>
+      <h3 id="yearPlanTitle" style="margin: 0; font-size: 1.1rem; font-weight: bold;">Plan hours</h3>
       <button type="button" id="yearPlanCloseBtn" class="modal-close-btn">&#x2715;</button>
     </div>
     <div class="year-plan-body">
@@ -694,21 +581,11 @@ viewedMonthLogs?.forEach(log => {
   </div>
 
   <script>
-    import { createClient } from '@supabase/supabase-js';
+    import type { SupabaseClient } from '@supabase/supabase-js';
+    import { getBrowserSession } from '../lib/browserSession';
 
-    const accessToken = document.body.dataset.accessToken;
-
-    const supabase = createClient(
-      import.meta.env.PUBLIC_SUPABASE_URL,
-      import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        }
-      }
-    );
+    // Set once the session loads (see the end of the DOMContentLoaded handler).
+    let supabase: SupabaseClient;
 
     interface PlannerLog {
       id: string;
@@ -727,14 +604,22 @@ viewedMonthLogs?.forEach(log => {
       return log.is_planned ? 'planned' : 'actual';
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const body = document.body;
+    document.addEventListener('DOMContentLoaded', async () => {
+      // --- MONTH FROM URL (?month=0-11&year=YYYY), defaulting to today in the user's timezone ---
+      const now = new Date();
+      const params = new URLSearchParams(location.search);
+      const urlMonth = parseInt(params.get('month') ?? '', 10);
+      const urlYear = parseInt(params.get('year') ?? '', 10);
+      const currentYear = Number.isFinite(urlYear) ? urlYear : now.getFullYear();
+      const currentMonth = urlMonth >= 0 && urlMonth <= 11 ? urlMonth : now.getMonth();
+      const isCurrentMonth = currentYear === now.getFullYear() && currentMonth === now.getMonth();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const monthPrefix = `${currentYear}-${pad(currentMonth + 1)}`;
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      const defaultDate = `${monthPrefix}-${pad(isCurrentMonth ? now.getDate() : 1)}`;
 
       // --- STATE ---
-      let logs: PlannerLog[] = JSON.parse(body.dataset.logs || '[]');
-      const defaultDate = body.dataset.defaultDate || '';
-      const currentYear = parseInt(body.dataset.currentYear!, 10);
-      const currentMonth = parseInt(body.dataset.currentMonth!, 10);
+      let logs: PlannerLog[] = [];
       let logIdToDelete: string | null = null;
       let selectedDate: string = defaultDate;
       let editingLogId: string | null = null;
@@ -910,6 +795,49 @@ viewedMonthLogs?.forEach(log => {
         });
       }
 
+      // --- MONTH HEADER & GRID ---
+      function goToMonth(search: string) {
+        (window as any).__showNavProgress?.();
+        location.search = search;
+      }
+
+      function renderMonthHeader() {
+        const name = new Date(currentYear, currentMonth, 1).toLocaleString('default', { month: 'long' });
+        document.getElementById('monthLabel')!.textContent = `${name} ${currentYear}`;
+        document.getElementById('entriesMonth')!.textContent = name;
+        document.title = `${name} ${currentYear} · Planner`;
+        document.getElementById('yearPlanTitle')!.textContent = `Plan hours for ${currentYear}`;
+
+        const prev = new Date(currentYear, currentMonth - 1, 1);
+        const next = new Date(currentYear, currentMonth + 1, 1);
+        document.getElementById('prevMonthBtn')!.addEventListener('click', () =>
+          goToMonth(`?month=${prev.getMonth()}&year=${prev.getFullYear()}`));
+        document.getElementById('nextMonthBtn')!.addEventListener('click', () =>
+          goToMonth(`?month=${next.getMonth()}&year=${next.getFullYear()}`));
+        const todayBtn = document.getElementById('todayBtn') as HTMLButtonElement;
+        todayBtn.hidden = isCurrentMonth;
+        todayBtn.addEventListener('click', () => goToMonth(''));
+      }
+
+      // Empty day boxes; updateDashboardAndCalendar() adds the hour pills.
+      function renderCalendarGrid() {
+        const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+        const boxes: HTMLElement[] = [];
+        for (let i = 0; i < firstDayIndex; i++) {
+          const blank = el('div', 'day-box');
+          blank.style.cssText = 'background: #09090b; cursor: default;';
+          boxes.push(blank);
+        }
+        for (let day = 1; day <= daysInMonth; day++) {
+          const box = el('div', 'day-box');
+          box.dataset.day = String(day);
+          const isToday = isCurrentMonth && day === now.getDate();
+          box.append(el('span', `day-number${isToday ? ' today' : ''}`, String(day)));
+          boxes.push(box);
+        }
+        calendarGrid.replaceChildren(...boxes);
+      }
+
       // --- FAB & ENTRY MODAL ---
       function updateStepperDisplay() {
         stepperValue.textContent = `${modalHours}h`;
@@ -967,10 +895,11 @@ viewedMonthLogs?.forEach(log => {
         loadEntryIntoForm(findEntryFor(kind));
       });
 
-      // Expose selectDate globally for inline onclick handlers on day boxes
-      (window as any).selectDate = function(dateStr: string) {
-        selectedDate = dateStr;
-      };
+      // Tapping a day selects it for the + button.
+      calendarGrid.addEventListener('click', e => {
+        const box = (e.target as HTMLElement).closest<HTMLElement>('.day-box[data-day]');
+        if (box) selectedDate = `${monthPrefix}-${pad(Number(box.dataset.day))}`;
+      });
 
       fab.addEventListener('click', () => openEntryModal(selectedDate));
 
@@ -1022,7 +951,7 @@ viewedMonthLogs?.forEach(log => {
         if (error) {
           showToast(`Error: ${error.message}`, 'error');
         } else if (newOrUpdatedLog) {
-          const isDifferentMonth = !newOrUpdatedLog.date.startsWith(`${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`);
+          const isDifferentMonth = !newOrUpdatedLog.date.startsWith(monthPrefix);
           if (isDifferentMonth) {
             location.reload();
           } else {
@@ -1223,8 +1152,6 @@ viewedMonthLogs?.forEach(log => {
         if (log) openEntryModal(log.date, log.id);
       });
 
-      renderLogList();
-
       // --- DELETE MODAL ---
       function closeDeleteModal() {
         deleteModal.style.display = 'none';
@@ -1245,6 +1172,28 @@ viewedMonthLogs?.forEach(log => {
         }
         closeDeleteModal();
       });
+
+      // --- INITIAL LOAD ---
+      renderMonthHeader();
+      renderCalendarGrid();
+
+      const session = await getBrowserSession();
+      if (!session) return; // redirecting to /login
+      supabase = session.db;
+
+      const { data, error } = await supabase
+        .from('planner_logs')
+        .select('*')
+        .gte('date', `${monthPrefix}-01`)
+        .lte('date', `${monthPrefix}-${pad(daysInMonth)}`)
+        .order('date', { ascending: false });
+      if (error) {
+        console.error('PLANNER_FETCH_ERROR:', error);
+        showToast("Couldn't load your entries. Reload to try again.", 'error');
+      }
+      logs = data ?? [];
+      renderLogList();
+      updateDashboardAndCalendar();
     });
   </script>
 </body>

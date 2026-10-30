@@ -7,7 +7,7 @@ const refreshToken = Astro.cookies.get('sb-refresh-token')?.value;
 
 if (accessToken && refreshToken) {
   // A simple check is enough here. The planner page will do the full validation.
-  return Astro.redirect('/planner');
+  return Astro.redirect('/planner/');
 }
 
 // Get error message from URL query parameters, e.g. /login?error=Invalid%20credentials

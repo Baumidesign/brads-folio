@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     }
 
     setSessionCookies(cookies, data.session);
-    return redirect('/planner');
+    return redirect('/planner/');
   } catch (e) {
     console.error('SIGNIN_API_ERROR:', e);
     // This is a server-side error, likely due to misconfiguration.
