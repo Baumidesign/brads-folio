@@ -1,4 +1,5 @@
 ---
+import { setSessionCookies } from '../../lib/session';
 import { supabase, createRequestClient, decodeAccessToken } from '../../lib/supabase';
 import BottomNav from '../../components/BottomNav.astro';
 import { VisitsScreen } from '../../components/visits/VisitsScreen';
@@ -40,16 +41,9 @@ if (claims?.exp && claims.exp > nowSeconds + 30) {
     return Astro.redirect('/login');
   }
 
-  const { access_token, refresh_token, expires_in } = refreshData.session;
-  sessionAccessToken = access_token;
+  sessionAccessToken = refreshData.session.access_token;
   user = refreshData.user;
-
-  Astro.cookies.set('sb-access-token', access_token, {
-    path: '/', maxAge: Math.round(expires_in), sameSite: 'lax', secure: import.meta.env.PROD,
-  });
-  Astro.cookies.set('sb-refresh-token', refresh_token, {
-    path: '/', maxAge: 60 * 60 * 24 * 30, sameSite: 'lax', secure: import.meta.env.PROD,
-  });
+  setSessionCookies(Astro.cookies, refreshData.session);
 }
 
 const db = createRequestClient(sessionAccessToken);

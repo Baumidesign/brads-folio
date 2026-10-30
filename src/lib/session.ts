@@ -6,7 +6,10 @@ import type { Session } from '@supabase/supabase-js';
 export function setSessionCookies(cookies: AstroCookies, session: Session) {
   cookies.set('sb-access-token', session.access_token, {
     path: '/',
-    maxAge: Math.round(session.expires_in),
+    // Keep the cookie as long as the refresh token. The JWT inside still
+    // expires after ~1h; the page guards see that and refresh it. If the
+    // cookie expired with the JWT, the guards would bounce to /login instead.
+    maxAge: 60 * 60 * 24 * 30, // 30 days
     sameSite: 'lax',
     secure: import.meta.env.PROD,
   });
