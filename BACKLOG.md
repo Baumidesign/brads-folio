@@ -21,6 +21,7 @@
 - MapLibre + MapTiler (free plan, key `PUBLIC_MAPTILER_KEY` in Netlify). Addresses geocoded in the browser on save; "Find them" button backfills contacts without a location.
 - "Add here" and "Move pin" added 2026-10-30 (`04e1673`).
 - To do: tap "Find them" on the live map to place the 10 existing contacts. Optional: remove `*.netlify.app` from the MapTiler key's allowed origins (previews stop showing the map).
+- **House numbers (idea, 2026-10-31):** the map style shows OpenStreetMap house numbers at zoom 18+, but OSM has almost none in the southern suburbs (checked: zero on a residential street there; ~9 in Norwood). Options: (1) satellite view toggle via MapTiler's free satellite/hybrid style — recommended; (2) small house-number label under each pin from the saved address; (3) both.
 
 ### Housekeeping
 - Migrations: the repo is now linked to the Supabase "Planner" project and new changes use CLI migrations. Still to do: rename `visits_people.sql` to the timestamped format (the CLI skips it), and capture the dashboard-created `planner_logs` table and policies in a baseline migration. The planned-per-day unique index from the handoff was never created.
