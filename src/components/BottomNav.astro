@@ -33,14 +33,52 @@ const tabs = [
       <span>{tab.label}</span>
     </a>
   ))}
+  <!-- Opens the account panel; sign-out lives there so a stray tap can't sign you out -->
+  <button type="button" class="nav-tab" id="accountTab" aria-haspopup="dialog">
+    <svg width="25" height="25" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></g></svg>
+    <span>Account</span>
+  </button>
 </nav>
+
+<div id="accountOverlay" class="account-overlay"></div>
+<div id="accountSheet" class="account-sheet" role="dialog" aria-label="Account">
+  <div class="account-grabber"></div>
+  <div class="account-label">Signed in as</div>
+  <div id="accountEmail" class="account-email">&nbsp;</div>
+  <form action="/api/auth/signout" method="post">
+    <button type="submit" class="account-signout">Sign out</button>
+  </form>
+  <button type="button" id="accountClose" class="account-cancel">Cancel</button>
+</div>
 
 <script>
   import { startNavProgress } from '../lib/navProgress';
 
-  document.querySelectorAll('.nav-tab').forEach(link => {
+  document.querySelectorAll('a.nav-tab').forEach(link => {
     link.addEventListener('click', () => startNavProgress());
   });
+
+  // --- Account panel ---
+  const overlay = document.getElementById('accountOverlay')!;
+  const sheet = document.getElementById('accountSheet')!;
+  const setOpen = (open: boolean) => {
+    overlay.classList.toggle('open', open);
+    sheet.classList.toggle('open', open);
+  };
+
+  document.getElementById('accountTab')!.addEventListener('click', () => {
+    // The email is in the signed-in user's access token (read locally, no request).
+    const token = document.cookie.split('; ').find(c => c.startsWith('sb-access-token='))?.split('=')[1];
+    let email = '';
+    try {
+      const b64 = decodeURIComponent(token ?? '').split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      email = JSON.parse(atob(b64)).email ?? '';
+    } catch {}
+    document.getElementById('accountEmail')!.textContent = email || 'Unknown account';
+    setOpen(true);
+  });
+  overlay.addEventListener('click', () => setOpen(false));
+  document.getElementById('accountClose')!.addEventListener('click', () => setOpen(false));
 </script>
 
 <style>
@@ -93,5 +131,85 @@ const tabs = [
 
   .nav-tab.active {
     color: #2F6BFF;
+  }
+
+  button.nav-tab {
+    background: none;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .account-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .account-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 201;
+    background: #1A1A1C;
+    border-radius: 20px 20px 0 0;
+    padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
+    font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+    transform: translateY(100%);
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* .open is toggled by the script above */
+  :global(.account-overlay.open) { opacity: 1; pointer-events: auto; }
+  :global(.account-sheet.open) { transform: translateY(0); }
+
+  .account-grabber {
+    width: 36px;
+    height: 5px;
+    border-radius: 3px;
+    background: #48484A;
+    margin: 0 auto 18px;
+  }
+
+  .account-label {
+    font-size: 13px;
+    color: #8E8E93;
+  }
+
+  .account-email {
+    font-size: 17px;
+    font-weight: 600;
+    color: #fff;
+    margin: 4px 0 20px;
+    overflow-wrap: anywhere;
+  }
+
+  .account-signout,
+  .account-cancel {
+    display: block;
+    width: 100%;
+    padding: 14px 0;
+    border: none;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .account-signout {
+    background: rgba(255, 69, 58, 0.15);
+    color: #FF453A;
+  }
+
+  .account-cancel {
+    margin-top: 8px;
+    background: none;
+    color: #8E8E93;
   }
 </style>
