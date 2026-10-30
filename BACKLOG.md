@@ -19,6 +19,7 @@
 
 ### Map page — live 2026-10-30 (`d502e99`)
 - MapLibre + MapTiler (free plan, key `PUBLIC_MAPTILER_KEY` in Netlify). Addresses geocoded in the browser on save; "Find them" button backfills contacts without a location.
+- "Add here" and "Move pin" added 2026-10-30 (`04e1673`).
 - To do: tap "Find them" on the live map to place the 10 existing contacts. Optional: remove `*.netlify.app` from the MapTiler key's allowed origins (previews stop showing the map).
 
 ### Housekeeping
