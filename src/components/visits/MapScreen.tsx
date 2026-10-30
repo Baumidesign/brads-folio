@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
@@ -454,17 +455,20 @@ export function MapScreen() {
         </div>
       )}
 
-      {sheet && session && (
+      {/* Rendered on <body>: inside the map's fixed container it would sit
+          under the bottom nav, hiding the Save button. */}
+      {sheet && session && createPortal(
         <PersonSheet
-          person={sheet.person}
-          isNew={sheet.isNew}
-          userId={session.userId}
-          accessToken={session.accessToken}
-          onSave={handleSave}
-          onDelete={handleDelete}
-          onClose={() => setSheet(null)}
-          prefill={sheet.prefill}
-        />
+            person={sheet.person}
+            isNew={sheet.isNew}
+            userId={session.userId}
+            accessToken={session.accessToken}
+            onSave={handleSave}
+            onDelete={handleDelete}
+            onClose={() => setSheet(null)}
+            prefill={sheet.prefill}
+          />,
+        document.body
       )}
     </div>
   );
