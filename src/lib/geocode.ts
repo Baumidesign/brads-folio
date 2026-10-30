@@ -66,3 +66,25 @@ export async function geocode(address: string, area?: string | null, near?: stri
 }
 
 export { proximity as lookupNear };
+
+// Spot on the map → nearest street address and suburb, for "Add here" /
+// "Move pin". The caller keeps the exact spot as the pin; this only suggests
+// the address text, which can be a house number or two off.
+export async function reverseGeocode(lng: number, lat: number): Promise<{ address: string; area: string } | null> {
+  if (!KEY) return null;
+  try {
+    const res = await fetch(
+      `https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${KEY}&types=address,street&limit=1`
+    );
+    if (!res.ok) return null;
+    const f = (await res.json()).features?.[0];
+    if (!f?.text) return null;
+    const ctx: { id?: string; text?: string }[] = f.context ?? [];
+    const suburb = ['municipality', 'neighbourhood', 'place']
+      .map(type => ctx.find(c => c.id?.startsWith(type + '.'))?.text)
+      .find(Boolean) ?? '';
+    return { address: f.address ? `${f.address} ${f.text}` : f.text, area: suburb };
+  } catch {
+    return null;
+  }
+}

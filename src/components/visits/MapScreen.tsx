@@ -6,7 +6,7 @@ import { usePeople } from './usePeople';
 import { T, INTEREST, initials } from './tokens';
 import { Avatar, Dots, PinGlyph } from './atoms';
 import { PersonSheet } from './PersonSheet';
-import { geocode, hasMapKey, lookupNear, mapStyleUrl } from '../../lib/geocode';
+import { geocode, hasMapKey, lookupNear, mapStyleUrl, reverseGeocode } from '../../lib/geocode';
 import type { Person } from './types';
 
 // MapLibre finds its worker relative to its own file, which breaks once
@@ -48,7 +48,18 @@ export function MapScreen() {
   const { session, db, loading, loadError, people, setPeople, upsertPerson, removePerson } = usePeople();
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<{ person: Person | null; isNew: boolean } | null>(null);
+  const [sheet, setSheet] = useState<{
+    person: Person | null;
+    isNew: boolean;
+    prefill?: { address: string; area: string; lat: number; lng: number };
+  } | null>(null);
+  // Crosshair mode: drag the map under a fixed pin, then "Use this spot".
+  const [placing, setPlacing] = useState<{ mode: 'new' } | { mode: 'move'; person: Person } | null>(null);
+  const [placingBusy, setPlacingBusy] = useState(false);
+  // After "Move pin": ask whether to also take the suggested address.
+  const [moveConfirm, setMoveConfirm] = useState<{
+    person: Person; lat: number; lng: number; address: string; area: string;
+  } | null>(null);
   const [locating, setLocating] = useState<{ done: number; total: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -139,6 +150,56 @@ export function MapScreen() {
     }
   };
 
+  // --- Add here / Move pin ---
+  const startPlacing = (mode: { mode: 'new' } | { mode: 'move'; person: Person }) => {
+    const map = mapRef.current;
+    if (!map) return;
+    setSelectedId(null);
+    setPlacing(mode);
+    if (mode.mode === 'move' && mode.person.lat != null && mode.person.lng != null) {
+      map.easeTo({ center: [mode.person.lng, mode.person.lat], zoom: Math.max(map.getZoom(), 17) });
+      return;
+    }
+    // Start on where the user is standing (asks for location the first time).
+    navigator.geolocation?.getCurrentPosition(
+      pos => map.easeTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 18 }),
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60 * 1000 }
+    );
+  };
+
+  const confirmSpot = async () => {
+    const map = mapRef.current;
+    if (!map || !placing) return;
+    const { lng, lat } = map.getCenter();
+    setPlacingBusy(true);
+    const found = await reverseGeocode(lng, lat);
+    setPlacingBusy(false);
+    const mode = placing;
+    setPlacing(null);
+    const address = found?.address ?? '';
+    const area = found?.area ?? '';
+    if (mode.mode === 'new') {
+      setSheet({ person: null, isNew: true, prefill: { address, area, lat, lng } });
+    } else {
+      setMoveConfirm({ person: mode.person, lat, lng, address, area });
+    }
+  };
+
+  const saveMove = async (useNewAddress: boolean) => {
+    if (!db || !moveConfirm) return;
+    const { person, lat, lng, address, area } = moveConfirm;
+    const changes = useNewAddress && address ? { lat, lng, address, area } : { lat, lng };
+    setMoveConfirm(null);
+    const { error } = await db.from('people').update(changes).eq('id', person.id);
+    if (error) {
+      showNotice(`Couldn't move the pin: ${error.message}`);
+      return;
+    }
+    setPeople(ps => ps.map(x => x.id === person.id ? { ...x, ...changes } : x));
+    setSelectedId(person.id);
+  };
+
   const handleSave = (saved: Person) => {
     upsertPerson(saved);
     setSheet(null);
@@ -188,7 +249,7 @@ export function MapScreen() {
       </div>
 
       {/* contacts without a location */}
-      {hasMapKey && !loading && !loadError && unpinned.length > 0 && !selected && (
+      {hasMapKey && !loading && !loadError && unpinned.length > 0 && !selected && !placing && !moveConfirm && (
         <button
           type="button"
           onClick={locateAll}
@@ -213,7 +274,7 @@ export function MapScreen() {
       )}
 
       {/* selected person card */}
-      {selected && !sheet && (
+      {selected && !sheet && !placing && !moveConfirm && (
         <div
           onClick={() => setSheet({ person: selected, isNew: false })}
           style={{
@@ -245,12 +306,22 @@ export function MapScreen() {
             >
               Directions
             </a>
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); startPlacing({ mode: 'move', person: selected }); }}
+              style={{
+                background: T.control, color: T.white, border: 'none', cursor: 'pointer',
+                fontFamily: T.font, fontSize: 13, fontWeight: 600, padding: '6px 12px', borderRadius: 999,
+              }}
+            >
+              Move pin
+            </button>
           </div>
         </div>
       )}
 
       {/* add person */}
-      {!sheet && session && (
+      {!sheet && session && !placing && !moveConfirm && (
         <button
           onClick={() => setSheet({ person: null, isNew: true })}
           style={{
@@ -266,6 +337,89 @@ export function MapScreen() {
         </button>
       )}
 
+      {/* Add here: place a new person by dragging the map under a crosshair */}
+      {hasMapKey && !sheet && session && !placing && !moveConfirm && !selected && (
+        <button
+          type="button"
+          onClick={() => startPlacing({ mode: 'new' })}
+          style={{
+            position: 'absolute', right: 92, bottom: 50, zIndex: 60,
+            background: 'rgba(20,20,22,0.92)', border: '1px solid ' + T.line, borderRadius: 999,
+            color: T.white, fontFamily: T.font, fontSize: 14, fontWeight: 600,
+            padding: '11px 16px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
+          }}
+        >
+          📍 Add here
+        </button>
+      )}
+
+      {placing && (
+        <>
+          {/* the pin's tip marks the map centre */}
+          <svg
+            width="36" height="48" viewBox="0 0 36 48"
+            style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-18px, -48px)', zIndex: 45, pointerEvents: 'none', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }}
+          >
+            <path d="M18 1C8.6 1 1 8.6 1 18c0 12.5 17 29 17 29s17-16.5 17-29C35 8.6 27.4 1 18 1z" fill={T.blue} stroke="#fff" strokeWidth="2.5" />
+            <circle cx="18" cy="18" r="5.5" fill="#fff" />
+          </svg>
+          <div style={{ position: 'absolute', left: 14, right: 14, top: 96, zIndex: 45, background: T.card, border: '1px solid ' + T.line, borderRadius: 14, padding: '10px 12px', color: T.white, fontSize: 14 }}>
+            {placing.mode === 'move' ? `Move the map so the pin sits on ${placing.person.name}'s house.` : 'Move the map so the pin sits on the house.'}
+          </div>
+          <div style={{ position: 'absolute', left: 14, right: 14, bottom: 40, zIndex: 60, display: 'flex', gap: 10 }}>
+            <button
+              type="button"
+              onClick={() => setPlacing(null)}
+              style={{ flex: 1, padding: '15px 0', borderRadius: 14, border: 'none', background: T.control, color: T.white, fontFamily: T.font, fontSize: 16, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmSpot}
+              disabled={placingBusy}
+              style={{ flex: 2, padding: '15px 0', borderRadius: 14, border: 'none', background: T.blue, color: '#fff', fontFamily: T.font, fontSize: 16, fontWeight: 600, cursor: 'pointer', opacity: placingBusy ? 0.6 : 1 }}
+            >
+              {placingBusy ? 'Finding address…' : 'Use this spot'}
+            </button>
+          </div>
+        </>
+      )}
+
+      {moveConfirm && (
+        <div style={{
+          position: 'absolute', left: 14, right: 14, bottom: 40, zIndex: 60,
+          background: T.card, borderRadius: 18, padding: 16, border: '1px solid ' + T.line,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+        }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: T.white }}>Move {moveConfirm.person.name}'s pin here?</div>
+          {moveConfirm.address ? (
+            <div style={{ fontSize: 13.5, color: T.text2, marginTop: 6, lineHeight: 1.4 }}>
+              Nearest address: <span style={{ color: T.white }}>{[moveConfirm.address, moveConfirm.area].filter(Boolean).join(', ')}</span>
+              <br />Saved: {[moveConfirm.person.address, moveConfirm.person.area].filter(Boolean).join(', ') || 'none'}
+            </div>
+          ) : (
+            <div style={{ fontSize: 13.5, color: T.text2, marginTop: 6 }}>No address found here; their saved address stays as it is.</div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
+            {moveConfirm.address && (
+              <button type="button" onClick={() => saveMove(true)}
+                style={{ padding: '13px 0', borderRadius: 12, border: 'none', background: T.blue, color: '#fff', fontFamily: T.font, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
+                Move pin & use this address
+              </button>
+            )}
+            <button type="button" onClick={() => saveMove(false)}
+              style={{ padding: '13px 0', borderRadius: 12, border: 'none', background: moveConfirm.address ? T.control : T.blue, color: '#fff', fontFamily: T.font, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
+              {moveConfirm.address ? 'Move pin, keep saved address' : 'Move pin'}
+            </button>
+            <button type="button" onClick={() => setMoveConfirm(null)}
+              style={{ padding: '10px 0', border: 'none', background: 'none', color: T.text2, fontFamily: T.font, fontSize: 14, cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {sheet && session && (
         <PersonSheet
           person={sheet.person}
@@ -275,6 +429,7 @@ export function MapScreen() {
           onSave={handleSave}
           onDelete={handleDelete}
           onClose={() => setSheet(null)}
+          prefill={sheet.prefill}
         />
       )}
     </div>

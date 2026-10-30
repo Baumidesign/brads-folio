@@ -21,6 +21,9 @@ interface PersonSheetProps {
   onSave: (p: Person) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
+  // From "Add here" on the map: suggested address plus the exact spot, which
+  // is saved as the pin instead of looking the address up.
+  prefill?: { address: string; area: string; lat: number; lng: number };
 }
 
 function todayISO(): string {
@@ -35,7 +38,7 @@ const fieldStyle: React.CSSProperties = {
   fontFamily: T.font, fontSize: 16, outline: 'none', resize: 'none',
 };
 
-export function PersonSheet({ person, isNew, userId, accessToken, onSave, onDelete, onClose }: PersonSheetProps) {
+export function PersonSheet({ person, isNew, userId, accessToken, onSave, onDelete, onClose, prefill }: PersonSheetProps) {
   const supabase = useMemo(() => createClient(
     import.meta.env.PUBLIC_SUPABASE_URL,
     import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
@@ -44,8 +47,8 @@ export function PersonSheet({ person, isNew, userId, accessToken, onSave, onDele
 
   const [draft, setDraft] = useState({
     name:      person?.name      ?? '',
-    address:   person?.address   ?? '',
-    area:      person?.area      ?? '',
+    address:   person?.address   ?? prefill?.address ?? '',
+    area:      person?.area      ?? prefill?.area    ?? '',
     interest:  person?.interest  ?? 3,
     follow_up: person?.follow_up ?? '',
   });
@@ -137,6 +140,7 @@ export function PersonSheet({ person, isNew, userId, accessToken, onSave, onDele
   // person has no location yet. Returns the lat/lng fields to save, or {} to
   // leave them as they are.
   const locationFields = async (): Promise<{ lat?: number | null; lng?: number | null }> => {
+    if (prefill) return { lat: prefill.lat, lng: prefill.lng }; // placed by hand: keep the exact spot
     if (!hasMapKey) return {};
     const address = draft.address.trim();
     const area = draft.area.trim();
