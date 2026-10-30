@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getBrowserSession } from '../../lib/browserSession';
+import { startNavProgress, finishNavProgress } from '../../lib/navProgress';
 import { T } from './tokens';
 import { PersonCard } from './PersonCard';
 import { PersonSheet } from './PersonSheet';
@@ -22,6 +23,7 @@ export function VisitsScreen() {
 
   useEffect(() => {
     (async () => {
+      startNavProgress(35); // keep the loading bar going until the list is in
       const s = await getBrowserSession();
       if (!s) return; // redirecting to /login
       setSession({ userId: s.userId, accessToken: s.accessToken });
@@ -37,6 +39,7 @@ export function VisitsScreen() {
         setPeople(data ?? []);
       }
       setLoading(false);
+      finishNavProgress();
     })();
   }, []);
 
