@@ -14,8 +14,8 @@
 - Only "Select days" exists. Remaining modes per `design_handoff_visits_map_year_planning/` (`yearplan.jsx`, HANDOFF.md Part B).
 - Date range default: today → 31 Dec (app uses Jan–Dec, not a Sept–Aug service year).
 
-### Speed: Calendar page
-- Visits is now a static page that loads its data in the browser (2026-10-30, `b3e5994`). Calendar (`/planner`) still renders on the Netlify function in us-east-1 (region can't be changed on the free plan) with Supabase in Tokyo, so it's still slow. Same treatment would fix it.
+### Speed (done 2026-10-30)
+- Calendar (`32a1ad4`) and Visits (`b3e5994`) are static pages that load their data in the browser, skipping the Netlify function (stuck in us-east-1 on the free plan; Supabase is in Tokyo).
 
 ### Map page (deferred)
 - Needs a map provider (MapLibre + MapTiler vs Mapbox) and a geocoding service chosen first.
