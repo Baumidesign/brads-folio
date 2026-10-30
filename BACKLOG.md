@@ -17,8 +17,9 @@
 ### Speed (done 2026-10-30)
 - Calendar (`32a1ad4`) and Visits (`b3e5994`) are static pages that load their data in the browser, skipping the Netlify function (stuck in us-east-1 on the free plan; Supabase is in Tokyo).
 
-### Map page (deferred)
-- Needs a map provider (MapLibre + MapTiler vs Mapbox) and a geocoding service chosen first.
+### Map page — live 2026-10-30 (`d502e99`)
+- MapLibre + MapTiler (free plan, key `PUBLIC_MAPTILER_KEY` in Netlify). Addresses geocoded in the browser on save; "Find them" button backfills contacts without a location.
+- To do: tap "Find them" on the live map to place the 10 existing contacts. Optional: remove `*.netlify.app` from the MapTiler key's allowed origins (previews stop showing the map).
 
 ### Housekeeping
 - Migrations: the repo is now linked to the Supabase "Planner" project and new changes use CLI migrations. Still to do: rename `visits_people.sql` to the timestamped format (the CLI skips it), and capture the dashboard-created `planner_logs` table and policies in a baseline migration. The planned-per-day unique index from the handoff was never created.
