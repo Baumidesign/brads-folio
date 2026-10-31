@@ -18,7 +18,7 @@ const isInvite = type === 'invite';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
-  <title>{isInvite ? 'Accept invite' : 'Reset password'} - Personal Planner</title>
+  <title>{isInvite ? 'Accept invite' : 'Reset password'} · Yo Planner</title>
   <style>
     body { background: #09090b; color: #fafafa; font-family: system-ui, -apple-system, sans-serif; display: grid; place-content: center; min-height: 100vh; margin: 0; padding: 1rem; box-sizing: border-box; }
     .login-card { background: #18181b; border: 1px solid #27272a; padding: 2.5rem; border-radius: 12px; width: 350px; max-width: 100%; box-sizing: border-box; }
@@ -35,7 +35,7 @@ const isInvite = type === 'invite';
 </head>
 <body>
   <div class="login-card">
-    <h1>{isInvite ? 'Welcome to Planner' : 'Reset your password'}</h1>
+    <h1>{isInvite ? 'Welcome to Yo Planner' : 'Reset your password'}</h1>
     <p class="intro">{isInvite ? 'Choose a password to finish setting up your account.' : 'Choose a new password.'}</p>
     <form method="post" action="/api/auth/set-password">
       <input type="hidden" name="token_hash" value={tokenHash} />
