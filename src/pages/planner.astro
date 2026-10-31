@@ -14,7 +14,7 @@ export const prerender = true;
   <meta name="apple-mobile-web-app-title" content="Yo Planner" />
   <title>Yo Planner</title>
   <style>
-    body { background: #09090b; color: #fafafa; font-family: system-ui, -apple-system, sans-serif; padding: 1rem; padding-bottom: 6rem; margin: 0; }
+    body { background: #09090b; color: #fafafa; font-family: system-ui, -apple-system, sans-serif; padding: 1rem; padding-bottom: calc(176px + env(safe-area-inset-bottom)); margin: 0; }
     .container { max-width: 950px; margin: 0 auto; }
     
     .month-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }

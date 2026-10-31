@@ -22,7 +22,7 @@ export const prerender = true;
       font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
       min-height: 100vh;
       padding-top: 16px;
-      padding-bottom: 96px;
+      padding-bottom: calc(176px + env(safe-area-inset-bottom)); /* clears the bottom nav and the + button */
     }
   </style>
 </head>
