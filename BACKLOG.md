@@ -12,6 +12,11 @@
 - **Privacy:** verified 2026-10-16. `planner_logs`, `people` and `visits` all have owner-only row-level security in the live DB, so a second user only sees their own data. (`planner_logs`' policies were created in the dashboard and aren't in a migration yet.)
 - **Decided:** invite-only; each planner fully private.
 
+### Bug: bottom calendar entry hidden behind bottom nav on iPhone (2026-10-31)
+- The last (earliest) entry card sits behind the bottom nav and + button even when scrolled to the end.
+- Tried `1c98663`: body `padding-bottom` 96px → `calc(176px + env(safe-area-inset-bottom))` on Calendar and Visits. Verified live CSS has it, but the user says no change after refresh and re-login.
+- Next: reproduce at phone size with real data. Check whether the body is actually the scroll container (iOS can ignore body bottom padding in some layouts), try a spacer element or `padding-bottom` on `.container` / `#logListContainer`, and check whether the user opens it from a home-screen icon (cached).
+
 ### Year planning: "Date range" and "Recurring" modes
 - Only "Select days" exists. Remaining modes per `design_handoff_visits_map_year_planning/` (`yearplan.jsx`, HANDOFF.md Part B).
 - Date range default: today → 31 Dec (app uses Jan–Dec, not a Sept–Aug service year).
