@@ -37,7 +37,7 @@
 
 ## Portfolio
 
-- **Calibration System case study:** waiting on imagery approach (screenshots vs diagrams) and project details.
+- **Calibration System case study:** live 2026-11-01 (`6779d73`, /work/case-study/). Still to do: add images (`heroImg` + per-phase/highlight `img` in `case-study.md`), confirm "What's next" items. Layout is reusable (e.g. a Yo Planner case study).
 - **Retitle `src/content/work/calibration-management.md`:** it's the marketing site, not the system.
 - **Refresh legacy case studies:** `charnwoodsa.md`, `atlanticletting.md`.
 - **Polish:** `og:image` / canonical / Twitter meta in `MainHead.astro`, unused images in `public/assets/`, nav contact link.
