@@ -1,0 +1,380 @@
+---
+// Structured case-study layout: quick facts, a timeline of phases,
+// highlight cards and a "What's next" list. Driven by the `story`
+// frontmatter field (see src/content/config.ts).
+import type { CollectionEntry } from 'astro:content';
+import TorqueChart from './TorqueChart.astro';
+
+interface Props {
+	data: CollectionEntry<'work'>['data'];
+	story: NonNullable<CollectionEntry<'work'>['data']['story']>;
+}
+
+const { data, story } = Astro.props;
+---
+
+<div class="story">
+	<header class="intro">
+		<p class="eyebrow">{story.eyebrow ?? 'Case study'}</p>
+		<h1>{data.title}</h1>
+		<p class="lede">{data.description}</p>
+		{data.techStack && data.techStack.length > 0 && (
+			<ul class="stack-pills">
+				{data.techStack.map((t) => <li>{t}</li>)}
+			</ul>
+		)}
+	</header>
+
+	{story.heroImg && <img class="hero-img" src={story.heroImg} alt={story.heroImg_alt ?? ''} />}
+
+	{story.stats && story.stats.length > 0 && (
+		<ul class="stats">
+			{story.stats.map((s) => (
+				<li>
+					<span class="stat-value">{s.value}</span>
+					<span class="stat-label">{s.label}</span>
+				</li>
+			))}
+		</ul>
+	)}
+
+	{data.role && (
+		<div class="role">
+			<p class="role-label">My role</p>
+			<p>{data.role}</p>
+		</div>
+	)}
+
+	<section class="section">
+		<div class="section-head">
+			{story.phasesEyebrow && <p class="eyebrow">{story.phasesEyebrow}</p>}
+			<h2>{story.phasesHeading ?? 'The journey'}</h2>
+		</div>
+		<ol class="timeline">
+			{story.phases.map((p, i) => (
+				<li class:list={['phase', { current: p.current }]}>
+					<div class="rail" aria-hidden="true">
+						<span class="dot">{i + 1}</span>
+						<span class="line"></span>
+					</div>
+					<div class="phase-body">
+						<p class="phase-label">{p.label}</p>
+						<h3>{p.title}</h3>
+						<p>{p.body}</p>
+						{p.img && <img src={p.img} alt={p.img_alt ?? ''} loading="lazy" />}
+					</div>
+				</li>
+			))}
+		</ol>
+	</section>
+
+	{story.highlights && story.highlights.length > 0 && (
+		<section class="section">
+			<div class="section-head">
+				<p class="eyebrow">Highlights</p>
+				<h2>{story.highlightsHeading ?? 'Highlights'}</h2>
+			</div>
+			<div class="highlights">
+				{story.highlights.map((h) => (
+					<article class:list={['highlight', { wide: h.visual }]}>
+						<h3>{h.title}</h3>
+						<p>{h.body}</p>
+						{h.visual === 'torque-chart' && <TorqueChart />}
+						{h.img && <img src={h.img} alt={h.img_alt ?? ''} loading="lazy" />}
+					</article>
+				))}
+			</div>
+		</section>
+	)}
+
+	{story.next && story.next.length > 0 && (
+		<section class="section">
+			<div class="section-head">
+				<p class="eyebrow">What's next</p>
+				<h2>Still building</h2>
+			</div>
+			<ul class="next">
+				{story.next.map((n) => <li>{n}</li>)}
+			</ul>
+		</section>
+	)}
+</div>
+
+<style>
+	.story {
+		max-width: 46rem;
+		margin-inline: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 1.75rem;
+	}
+
+	.section {
+		margin-top: 1.75rem;
+	}
+
+	/* Intro (matches mockup A) */
+	.intro {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	h1 {
+		margin: 0;
+		font-size: var(--text-3xl);
+		line-height: 1.05;
+		color: var(--gray-0);
+	}
+
+	@media (min-width: 50em) {
+		h1 {
+			font-size: var(--text-4xl);
+		}
+	}
+
+	.lede {
+		font-size: var(--text-lg);
+		line-height: 1.5;
+		color: var(--gray-300);
+	}
+
+	.stack-pills {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.stack-pills li {
+		padding: 0.35rem 0.85rem;
+		border-radius: 999rem;
+		background: rgba(66, 75, 255, 0.12);
+		border: 1px solid rgba(66, 75, 255, 0.4);
+		color: var(--accent-regular);
+		font-size: var(--text-sm);
+	}
+
+	:global(.theme-dark) .stack-pills li {
+		color: #b9c0ff;
+	}
+
+	.hero-img {
+		border-radius: 1.25rem;
+	}
+
+	.role {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		padding: 1.1rem 1.25rem;
+		border: 1px solid var(--gray-800);
+		border-radius: 1rem;
+		background: var(--gray-999_40);
+		color: var(--gray-0);
+	}
+
+	.role-label {
+		font-size: var(--text-sm);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		font-weight: 600;
+		color: var(--gray-400);
+	}
+
+	.eyebrow {
+		margin: 0;
+		font-size: var(--text-sm);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		font-weight: 600;
+		color: var(--accent-regular);
+	}
+
+	h2 {
+		margin: 0;
+		font-size: var(--text-xl);
+		line-height: 1.2;
+		color: var(--gray-0);
+	}
+
+	h3 {
+		margin: 0;
+		font-size: var(--text-lg);
+		color: var(--gray-0);
+	}
+
+	p {
+		margin: 0;
+	}
+
+	img {
+		width: 100%;
+		border-radius: 1rem;
+		border: 1px solid var(--gray-800);
+	}
+
+	.section {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	.section-head {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+
+	/* Quick facts */
+	.stats {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.75rem;
+	}
+
+	.stats li {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+		text-align: center;
+		padding: 1rem 0.5rem;
+		border: 1px solid var(--gray-800);
+		border-radius: 1rem;
+		background: var(--gray-999_40);
+	}
+
+	.stat-value {
+		font-family: var(--font-brand);
+		font-size: var(--text-xl);
+		font-weight: 700;
+		color: var(--gray-0);
+	}
+
+	.stat-label {
+		font-size: var(--text-sm);
+		line-height: 1.3;
+		color: var(--gray-400);
+	}
+
+	/* Timeline */
+	.timeline {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.phase {
+		display: flex;
+		gap: 1rem;
+	}
+
+	.rail {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex-shrink: 0;
+		width: 2rem;
+	}
+
+	.dot {
+		width: 2rem;
+		height: 2rem;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: var(--text-sm);
+		font-weight: 700;
+		background: var(--gray-800);
+		color: var(--gray-300);
+	}
+
+	.current .dot {
+		background: var(--accent-regular);
+		color: #fff;
+		box-shadow: 0 0 0 0.375rem var(--accent-overlay);
+	}
+
+	.line {
+		flex-grow: 1;
+		width: 2px;
+		background: var(--gray-800);
+	}
+
+	.phase:last-child .line {
+		display: none;
+	}
+
+	.phase-body {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		padding-bottom: 2.5rem;
+		min-width: 0;
+	}
+
+	.phase:last-child .phase-body {
+		padding-bottom: 0;
+	}
+
+	.phase-label {
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+	}
+
+	.current .phase-label {
+		color: var(--accent-regular);
+		font-weight: 600;
+	}
+
+	/* Highlights */
+	.highlights {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.highlight {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		padding: 1.5rem;
+		border: 1px solid var(--gray-800);
+		border-radius: 1.25rem;
+		background: var(--gray-999_40);
+	}
+
+	@media (min-width: 50em) {
+		.highlights {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.highlight.wide {
+			grid-column: 1 / -1;
+		}
+	}
+
+	/* What's next */
+	.next {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.next li {
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--gray-800);
+		border-radius: 0.875rem;
+		background: var(--gray-999_40);
+		color: var(--gray-0);
+	}
+</style>

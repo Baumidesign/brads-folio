@@ -35,6 +35,47 @@ export const collections = {
 			// Lets the homepage curate specific case studies later instead of
 			// always showing the 4 most recent by publishDate.
 			featured: z.boolean().optional(),
+
+			// Optional structured layout (rendered by CaseStudyStory.astro)
+			// in place of a plain markdown body: quick facts, a timeline of
+			// phases, highlight cards and a "What's next" list. Images are
+			// optional; leave `img` out until there's a real one.
+			story: z
+				.object({
+					eyebrow: z.string().optional(),
+					// Large image under the intro. Separate from `img`, which is the
+					// thumbnail on the work listing.
+					heroImg: z.string().optional(),
+					heroImg_alt: z.string().optional(),
+					stats: z.array(z.object({ value: z.string(), label: z.string() })).optional(),
+					phasesHeading: z.string().optional(),
+					phasesEyebrow: z.string().optional(),
+					phases: z.array(
+						z.object({
+							label: z.string(),
+							title: z.string(),
+							body: z.string(),
+							img: z.string().optional(),
+							img_alt: z.string().optional(),
+							current: z.boolean().optional(),
+						})
+					),
+					highlightsHeading: z.string().optional(),
+					highlights: z
+						.array(
+							z.object({
+								title: z.string(),
+								body: z.string(),
+								// A built-in illustration instead of an image.
+								visual: z.enum(['torque-chart']).optional(),
+								img: z.string().optional(),
+								img_alt: z.string().optional(),
+							})
+						)
+						.optional(),
+					next: z.array(z.string()).optional(),
+				})
+				.optional(),
 		}),
 	}),
 };

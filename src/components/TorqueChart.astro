@@ -1,0 +1,125 @@
+---
+// Illustration for the ISO 6789 point: five readings, one outside its
+// limit. Example values, not real calibration data. Bar width = how much
+// of the permitted error that reading uses (100% or more = outside).
+const readings = [
+	{ use: 42 },
+	{ use: 55 },
+	{ use: 112 },
+	{ use: 38 },
+	{ use: 47 },
+];
+---
+
+<figure class="chart">
+	<figcaption>
+		<span>Share of permitted error used, per reading</span>
+		<span class="tag">Example</span>
+	</figcaption>
+	<ul>
+		{readings.map((r, i) => {
+			const fail = r.use > 100;
+			return (
+				<li class:list={{ fail }}>
+					<span class="name">Reading {i + 1}</span>
+					<span class="track" aria-hidden="true">
+						<span class="bar" style={`width: ${Math.min(r.use, 100)}%`}></span>
+					</span>
+					<span class="result">{fail ? 'Fail' : 'Pass'}</span>
+				</li>
+			);
+		})}
+	</ul>
+	<p class="note">
+		The average looks fine, but reading 3 is outside its limit, so this tool doesn't pass.
+	</p>
+</figure>
+
+<style>
+	.chart {
+		margin: 0.5rem 0 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.9rem;
+		padding: 1.25rem;
+		border-radius: 1rem;
+		border: 1px solid var(--gray-800);
+		background: var(--gray-999);
+	}
+
+	figcaption {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+	}
+
+	.tag {
+		flex-shrink: 0;
+		padding: 0.15rem 0.6rem;
+		border-radius: 999rem;
+		border: 1px solid var(--gray-700);
+		font-size: 0.75rem;
+	}
+
+	ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	li {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-size: var(--text-sm);
+	}
+
+	.name {
+		width: 5.5rem;
+		flex-shrink: 0;
+		color: var(--gray-300);
+	}
+
+	.track {
+		flex-grow: 1;
+		height: 0.625rem;
+		border-radius: 999rem;
+		background: var(--gray-800);
+		overflow: hidden;
+	}
+
+	.bar {
+		display: block;
+		height: 100%;
+		border-radius: 999rem;
+		background: var(--accent-light);
+	}
+
+	.fail .bar {
+		background: #ff9f0a;
+	}
+
+	.result {
+		width: 2.5rem;
+		flex-shrink: 0;
+		text-align: right;
+		color: var(--gray-300);
+	}
+
+	.fail .result {
+		color: #d97706;
+		font-weight: 700;
+	}
+
+	.note {
+		margin: 0;
+		font-size: var(--text-sm);
+		color: var(--gray-300);
+	}
+</style>
