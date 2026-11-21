@@ -1365,6 +1365,13 @@ export const prerender = true;
         updateYearPlanHoursDisplay();
         yearPlanOverlay.classList.add('open');
         yearPlanSheet.classList.add('open');
+
+        // Start at the month being viewed rather than January
+        const body = yearPlanSheet.querySelector<HTMLElement>('.year-plan-body');
+        const monthEl = yearPlanGrid.querySelectorAll<HTMLElement>('.mini-month')[currentMonth];
+        if (body && monthEl) {
+          body.scrollTop = monthEl.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 8;
+        }
       }
 
       function closeYearPlanSheet() {
