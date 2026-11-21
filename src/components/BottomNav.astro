@@ -29,13 +29,13 @@ const tabs = [
 <nav class="bottom-nav">
   {tabs.map(tab => (
     <a href={tab.href} class={`nav-tab ${tab.active ? 'active' : ''}`}>
-      <svg width="25" height="25" viewBox="0 0 24 24" set:html={tab.icon} />
+      <svg width="22" height="22" viewBox="0 0 24 24" set:html={tab.icon} />
       <span>{tab.label}</span>
     </a>
   ))}
   <!-- Opens the account panel; sign-out lives there so a stray tap can't sign you out -->
   <button type="button" class="nav-tab" id="accountTab" aria-haspopup="dialog">
-    <svg width="25" height="25" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></g></svg>
+    <svg width="22" height="22" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></g></svg>
     <span>Account</span>
   </button>
 </nav>
@@ -103,13 +103,13 @@ const tabs = [
     right: 0;
     bottom: 0;
     z-index: 55;
-    height: 84px;
+    height: 50px; /* + 16px bottom padding = 66px total (content-box); MapScreen NAV_HEIGHT matches */
     background: rgba(14, 14, 16, 0.86);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border-top: 1px solid rgba(255, 255, 255, 0.07);
     display: flex;
-    padding-bottom: 18px;
+    padding-bottom: 16px;
   }
 
   .nav-tab {
@@ -118,8 +118,8 @@ const tabs = [
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding-top: 8px;
+    gap: 2px;
+    padding-top: 4px;
     text-decoration: none;
     color: #7C7C82;
     font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;

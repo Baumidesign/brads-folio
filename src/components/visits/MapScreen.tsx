@@ -15,7 +15,7 @@ import type { Person } from './types';
 maplibregl.setWorkerUrl(workerUrl);
 
 const ADELAIDE: [number, number] = [138.6007, -34.9285];
-const NAV_HEIGHT = 102; // BottomNav: 84px + 18px bottom padding
+const NAV_HEIGHT = 66; // BottomNav: 50px + 16px bottom padding
 
 // Teardrop pin from the design handoff: coloured by interest, initials inside,
 // bigger with a glow for interest >= 4.

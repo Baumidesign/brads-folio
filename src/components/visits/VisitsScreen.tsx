@@ -106,7 +106,7 @@ export function VisitsScreen() {
         <button
           onClick={openNew}
           style={{
-            position: 'fixed', right: 20, bottom: 96, zIndex: 60,
+            position: 'fixed', right: 20, bottom: 80, zIndex: 60,
             width: 60, height: 60, borderRadius: 60,
             background: T.blue, border: 'none', cursor: 'pointer',
             color: '#fff', fontSize: 30, fontWeight: 300,
