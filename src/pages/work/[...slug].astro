@@ -213,7 +213,18 @@ const { Content } = await entry.render();
 		text-decoration-color: currentColor;
 	}
 
+	/* Project titles are often long domains; the shared Hero default
+	   (5xl on desktop) is sized for one-word page titles like "About". */
+	header :global(.title) {
+		font-size: var(--text-2xl);
+		overflow-wrap: anywhere;
+	}
+
 	@media (min-width: 50em) {
+		header :global(.title) {
+			font-size: var(--text-3xl);
+		}
+
 		.back-link {
 			display: block;
 			align-self: flex-start;
