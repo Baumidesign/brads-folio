@@ -35,8 +35,11 @@
 - Needs a `people.pinned` migration, a Pin toggle in PersonSheet, and a 5-tab bottom nav. Open question: should Home or Calendar be the screen the app opens on?
 - Mock-up made 2026-11-21 (screen 3 of the planner preview).
 
-### Invite friends from inside the app — to plan separately
-- Wanted 2026-11-21. Builds on the invite-only work above (needs the service role key server-side).
+### Invite friends from inside the app — planned 2026-11-21
+- **Blocked by:** the failing invite email (see Multi-user above): check Supabase Auth logs + custom SMTP, confirm Site URL and Invite/Reset templates.
+- **Build (~1 session once email works):** (1) Supabase service role key as a server-only Netlify env var (run `netlify env:list` first; NOT `PUBLIC_`); (2) `/api/admin/invite` route that checks the caller may invite, then `auth.admin.inviteUserByEmail(email, { redirectTo: '/auth/confirm' })`; (3) "Invite a friend" field in the Account panel with sent/error states; (4) test with a second email: set password, starts empty, can't see your data.
+- **Decide:** who can invite (only Brad — recommended — or anyone); email invite (recommended, reuses `/auth/confirm`) vs temporary password (needs "Change password" built first).
+- **Meanwhile:** add people by hand in the Supabase dashboard (Authentication → Users → Add user → Create new user, Auto Confirm on) and share the password in person.
 
 ### Hide the + button while scrolling (idea, 2026-11-21)
 - Hide on scroll down; bring back on scroll up, when scrolling stops, or at the bottom of the page. Calendar and Visits only (Map's "Add here" stays). Respect reduced motion.
