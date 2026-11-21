@@ -43,6 +43,42 @@ export const prerender = true;
     :global(.hours-credit) { background: #f59e0b; color: #18181b; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; font-weight: bold; }
     :global(.hours-credit-planned) { border: 1px dashed #fbbf24; color: #fbbf24; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; }
     .stat-sub { font-size: 0.75rem; color: #a1a1aa; margin-top: 0.35rem; }
+    .stat-value.small { font-size: 1.6rem; margin-top: 0.35rem; }
+    .stat-of { font-size: 0.95rem; color: #a1a1aa; font-weight: 500; }
+
+    /* Goal card */
+    .goal-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 10px; }
+    .goal-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
+    .goal-big { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.3rem; }
+    #goalDone { font-size: 2rem; font-weight: bold; }
+    .goal-of {
+      background: none; border: none; padding: 0; color: #a1a1aa; font-family: inherit; font-size: 1rem;
+      cursor: pointer; text-decoration: underline dotted #52525b; text-underline-offset: 4px; touch-action: manipulation;
+    }
+    .goal-status { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; text-align: right; padding-top: 2px; }
+    /* Status classes are set by client JS */
+    :global(.goal-status.behind) { color: #f87171; }
+    :global(.goal-status.ok) { color: #4ade80; }
+    .goal-bar { position: relative; height: 8px; background: #27272a; border-radius: 4px; margin: 0.75rem 0 0.45rem; }
+    .goal-bar-ministry, .goal-bar-credit { position: absolute; top: 0; bottom: 0; width: 0; }
+    .goal-bar-ministry { left: 0; background: #2563eb; border-radius: 4px 0 0 4px; }
+    .goal-bar-credit { background: #f59e0b; }
+    .goal-bar-mark { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: #fafafa; border-radius: 1px; }
+    .goal-note { font-size: 0.75rem; color: #a1a1aa; }
+    .goal-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 0.75rem; }
+    .goal-stats[hidden] { display: none; }
+    .goal-stats > div { background: #1f1f23; border-radius: 8px; padding: 0.5rem; text-align: center; }
+    .goal-stats b { display: block; font-size: 1.05rem; }
+    .goal-stats span { font-size: 0.7rem; color: #a1a1aa; }
+    .goal-month-btn { background: #27272a; border: none; font-weight: 600; cursor: pointer; color: #fafafa; }
+    .goal-sheet-hint { margin: 0; font-size: 0.8rem; color: #71717a; text-align: center; }
+
+    .studies-stepper { display: flex; align-items: center; justify-content: center; gap: 0.9rem; }
+    .studies-btn {
+      width: 32px; height: 32px; margin-top: 0.35rem; border-radius: 50%; border: none; background: #3f3f46;
+      color: #fafafa; font-size: 1.1rem; font-weight: bold; cursor: pointer; touch-action: manipulation;
+    }
+    .studies-btn:disabled { opacity: 0.35; cursor: default; }
 
     /* Entries list — week groups and cards are built by client JS, hence :global() */
     #logListContainer { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -468,16 +504,44 @@ export const prerender = true;
       <button type="button" id="nextMonthBtn">Next &rarr;</button>
     </div>
     
-    <div class="dashboard">
-      <div class="stat-card actual">
-        <div class="stat-label">Total Hours</div>
-        <div id="monthTotalValue" class="stat-value">–</div>
-        <div id="monthTotalSub" class="stat-sub">&nbsp;</div>
+    <!-- Goal card: filled in by updateDashboardAndCalendar() -->
+    <section class="goal-card" aria-label="Monthly goal">
+      <div class="goal-top">
+        <div>
+          <div class="stat-label" id="goalHeading">This month</div>
+          <div class="goal-big">
+            <span id="goalDone">–</span>
+            <button type="button" id="goalEditBtn" class="goal-of" disabled>of <span id="goalTarget">–</span>h goal <span aria-hidden="true">✎</span></button>
+          </div>
+        </div>
+        <div id="goalStatus" class="goal-status"></div>
       </div>
+      <div class="goal-bar" aria-hidden="true">
+        <div id="goalBarMinistry" class="goal-bar-ministry"></div>
+        <div id="goalBarCredit" class="goal-bar-credit"></div>
+        <div id="goalBarMark" class="goal-bar-mark" hidden></div>
+      </div>
+      <div id="goalNote" class="goal-note">&nbsp;</div>
+      <div id="goalStats" class="goal-stats" hidden>
+        <div><b id="goalLeft">–</b><span>left</span></div>
+        <div><b id="goalDaysLeft">–</b><span>days left</span></div>
+        <div><b id="goalPerDay">–</b><span>per day</span></div>
+      </div>
+    </section>
+
+    <div class="dashboard">
       <div class="stat-card planned">
         <div class="stat-label">Planned</div>
-        <div id="monthPlannedValue" class="stat-value">–</div>
-        <div id="monthPlannedSub" class="stat-sub">&nbsp;</div>
+        <div class="stat-value small"><span id="plannedValue">–</span> <span class="stat-of">/ <span id="plannedGoal">–</span>h</span></div>
+        <div id="plannedSub" class="stat-sub">&nbsp;</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Studies</div>
+        <div class="studies-stepper">
+          <button type="button" id="studiesMinus" class="studies-btn" disabled aria-label="One fewer study">&#x2212;</button>
+          <div id="studiesValue" class="stat-value small">–</div>
+          <button type="button" id="studiesPlus" class="studies-btn" disabled aria-label="One more study">+</button>
+        </div>
       </div>
     </div>
 
@@ -552,6 +616,30 @@ export const prerender = true;
     </div>
   </div>
 
+  <div id="goalSheetOverlay" class="entry-modal-overlay"></div>
+  <div id="goalSheet" class="entry-modal">
+    <div class="entry-modal-grabber"><div></div></div>
+    <div class="entry-modal-header">
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: bold;">Monthly goal</h3>
+      <button type="button" id="goalSheetCloseBtn" class="modal-close-btn">&#x2715;</button>
+    </div>
+    <div class="entry-modal-body">
+      <div id="goalChips" class="hour-chips">
+        {[15, 30, 50, 70].map(h => (
+          <button type="button" class="hour-chip" data-goal={h}>{h}h</button>
+        ))}
+      </div>
+      <div class="hour-stepper">
+        <button type="button" id="goalMinus" class="stepper-btn">&#x2212;</button>
+        <div id="goalSheetValue" class="stepper-value">50h</div>
+        <button type="button" id="goalPlus" class="stepper-btn">+</button>
+      </div>
+      <button type="button" id="goalSaveUsualBtn" class="form-btn btn-primary">Save as my usual goal</button>
+      <button type="button" id="goalSaveMonthBtn" class="form-btn goal-month-btn">Just for <span id="goalSheetMonth"></span></button>
+      <p class="goal-sheet-hint">Your usual goal applies to every month you haven't set separately.</p>
+    </div>
+  </div>
+
   <div id="yearPlanOverlay" class="entry-modal-overlay"></div>
   <div id="yearPlanSheet" class="entry-modal year-plan-sheet">
     <div class="entry-modal-grabber"><div></div></div>
@@ -580,6 +668,9 @@ export const prerender = true;
     import type { SupabaseClient } from '@supabase/supabase-js';
     import { getBrowserSession } from '../lib/browserSession';
     import { startNavProgress, finishNavProgress } from '../lib/navProgress';
+    import { countedHours, fmtHours } from '../lib/ministryMath';
+
+    const DEFAULT_GOAL = 50;
 
     // Set once the session loads (see the end of the DOMContentLoaded handler).
     let supabase: SupabaseClient;
@@ -627,16 +718,47 @@ export const prerender = true;
       let yearPlanExisting = new Set<string>();
       let yearPlanHours: number = 4;
       let yearPlanLoaded = false;
+      let userId = '';
+      let usualGoal = DEFAULT_GOAL;      // planner_settings.monthly_goal
+      let monthGoal: number | null = null; // planner_months.goal override for this month
+      let studies = 0;
+      let goalSheetValue = DEFAULT_GOAL;
+      let studiesSaveTimer: ReturnType<typeof setTimeout> | undefined;
+      const monthStart = `${monthPrefix}-01`;
+      const monthName = new Date(currentYear, currentMonth, 1).toLocaleString('en-AU', { month: 'long' });
+      // Where this month sits relative to today: -1 past, 0 current, 1 future
+      const monthTense = isCurrentMonth ? 0
+        : (currentYear * 12 + currentMonth) < (now.getFullYear() * 12 + now.getMonth()) ? -1 : 1;
 
       // --- DOM ELEMENTS ---
       const deleteModal = document.getElementById('deleteModal') as HTMLDivElement;
       const cancelDeleteBtn = document.getElementById('cancelDeleteBtn') as HTMLButtonElement;
       const confirmDeleteBtn = document.getElementById('confirmDeleteBtn') as HTMLButtonElement;
       const logListContainer = document.getElementById('logListContainer') as HTMLDivElement;
-      const monthTotalValue = document.getElementById('monthTotalValue') as HTMLDivElement;
-      const monthTotalSub = document.getElementById('monthTotalSub') as HTMLDivElement;
-      const monthPlannedValue = document.getElementById('monthPlannedValue') as HTMLDivElement;
-      const monthPlannedSub = document.getElementById('monthPlannedSub') as HTMLDivElement;
+      const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+      const goalHeading = $('goalHeading');
+      const goalDone = $('goalDone');
+      const goalTarget = $('goalTarget');
+      const goalEditBtn = $<HTMLButtonElement>('goalEditBtn');
+      const goalStatus = $('goalStatus');
+      const goalBarMinistry = $('goalBarMinistry');
+      const goalBarCredit = $('goalBarCredit');
+      const goalBarMark = $('goalBarMark');
+      const goalNote = $('goalNote');
+      const goalStats = $('goalStats');
+      const goalLeft = $('goalLeft');
+      const goalDaysLeft = $('goalDaysLeft');
+      const goalPerDay = $('goalPerDay');
+      const plannedValue = $('plannedValue');
+      const plannedGoal = $('plannedGoal');
+      const plannedSub = $('plannedSub');
+      const studiesValue = $('studiesValue');
+      const studiesMinus = $<HTMLButtonElement>('studiesMinus');
+      const studiesPlus = $<HTMLButtonElement>('studiesPlus');
+      const goalSheet = $('goalSheet');
+      const goalSheetOverlay = $('goalSheetOverlay');
+      const goalSheetValueEl = $('goalSheetValue');
+      const goalChips = $('goalChips');
       const kindToggle = document.getElementById('kindToggle') as HTMLDivElement;
       const calendarGrid = document.getElementById('calendarGrid') as HTMLDivElement;
       const toastContainer = document.getElementById('toast-container') as HTMLDivElement;
@@ -776,10 +898,7 @@ export const prerender = true;
           hoursByDay[day][key] += log.hours || 0;
           month[key] += log.hours || 0;
         });
-        monthTotalValue.textContent = String(month.actual + month.credit);
-        monthTotalSub.textContent = `${month.actual}h ministry · ${month.credit}h credit`;
-        monthPlannedValue.textContent = String(month.planned + month.creditPlanned);
-        monthPlannedSub.textContent = `${month.planned}h ministry · ${month.creditPlanned}h credit`;
+        renderGoalCard(month);
         calendarGrid.querySelectorAll('.day-box[data-day]').forEach(dayBox => {
           const day = parseInt((dayBox as HTMLElement).dataset.day!, 10);
           const data = hoursByDay[day];
@@ -791,6 +910,168 @@ export const prerender = true;
           });
         });
       }
+
+      // --- GOAL CARD ---
+      const currentGoal = () => monthGoal ?? usualGoal;
+      const pct = (h: number, goal: number) => `${goal > 0 ? Math.min(100, (h / goal) * 100) : 0}%`;
+
+      function renderGoalCard(month: DayTotals) {
+        const goal = currentGoal();
+        const done = countedHours(month.actual, month.credit);
+        const creditCounted = done - month.actual;
+        const left = Math.max(0, goal - done);
+
+        goalHeading.textContent = monthTense === 0 ? 'This month' : monthTense < 0 ? 'Month total' : 'Goal';
+        goalDone.textContent = fmtHours(done);
+        goalTarget.textContent = String(goal);
+
+        // Bar: ministry in blue, counted credit in orange
+        const ministryShown = Math.min(month.actual, goal);
+        goalBarMinistry.style.width = pct(ministryShown, goal);
+        goalBarCredit.style.left = pct(ministryShown, goal);
+        goalBarCredit.style.width = pct(Math.max(0, Math.min(done, goal) - ministryShown), goal);
+
+        // Note: the split, plus how much credit counted when the 55h limit kicks in
+        const parts = [`${fmtHours(month.actual)} ministry`];
+        if (month.credit > 0) {
+          parts.push(creditCounted < month.credit
+            ? `${fmtHours(creditCounted)} of ${fmtHours(month.credit)} credit counts`
+            : `${fmtHours(month.credit)} credit`);
+        }
+        goalNote.textContent = parts.join(' · ');
+
+        goalStatus.className = 'goal-status';
+        goalStatus.textContent = '';
+        goalBarMark.hidden = true;
+        goalStats.hidden = true;
+
+        if (goal > 0 && done >= goal) {
+          goalStatus.textContent = 'Goal reached ✓';
+          goalStatus.classList.add('ok');
+        } else if (monthTense < 0 && goal > 0) {
+          goalStatus.textContent = `${fmtHours(left)} short`;
+          goalStatus.classList.add('behind');
+        } else if (monthTense === 0 && goal > 0) {
+          // Where you'd be today if you spread the goal evenly over the month (today included)
+          const today = now.getDate();
+          const expected = (goal * today) / daysInMonth;
+          const gap = expected - done;
+          goalStatus.textContent = gap >= 0.25 ? `${fmtHours(gap)} behind` : 'On track';
+          goalStatus.classList.add(gap >= 0.25 ? 'behind' : 'ok');
+          goalBarMark.style.left = pct(expected, goal);
+          goalBarMark.hidden = false;
+
+          const daysLeft = daysInMonth - today + 1;
+          goalLeft.textContent = fmtHours(left);
+          goalDaysLeft.textContent = String(daysLeft);
+          goalPerDay.textContent = fmtHours(left / daysLeft);
+          goalStats.hidden = false;
+        }
+
+        // Planned vs goal (planned entries, same 55h credit rule)
+        const planned = countedHours(month.planned, month.creditPlanned);
+        plannedValue.textContent = fmtHours(planned);
+        plannedGoal.textContent = String(goal);
+        const diff = planned - goal;
+        plannedSub.textContent = planned === 0 ? 'Nothing planned yet'
+          : Math.abs(diff) < 0.25 ? 'Matches your goal'
+          : diff > 0 ? `${fmtHours(diff)} over goal` : `${fmtHours(-diff)} short of goal`;
+      }
+
+      // --- STUDIES ---
+      function renderStudies() {
+        studiesValue.textContent = String(studies);
+        studiesMinus.disabled = studies <= 0;
+        studiesPlus.disabled = false;
+        goalEditBtn.disabled = false;
+      }
+
+      function changeStudies(by: number) {
+        studies = Math.max(0, Math.min(999, studies + by));
+        renderStudies();
+        // Wait for taps to settle, then save once
+        clearTimeout(studiesSaveTimer);
+        studiesSaveTimer = setTimeout(async () => {
+          const { error } = await supabase
+            .from('planner_months')
+            .upsert({ user_id: userId, month: monthStart, studies }, { onConflict: 'user_id,month' });
+          if (error) {
+            console.error('STUDIES_SAVE_ERROR:', error);
+            showToast("Couldn't save studies. Try again.", 'error');
+          }
+        }, 600);
+      }
+
+      studiesMinus.addEventListener('click', () => changeStudies(-1));
+      studiesPlus.addEventListener('click', () => changeStudies(1));
+
+      // --- GOAL SHEET ---
+      function renderGoalSheetValue() {
+        goalSheetValueEl.textContent = `${goalSheetValue}h`;
+        goalChips.querySelectorAll<HTMLButtonElement>('.hour-chip').forEach(chip => {
+          chip.classList.toggle('active', Number(chip.dataset.goal) === goalSheetValue);
+        });
+      }
+
+      function openGoalSheet() {
+        goalSheetValue = currentGoal();
+        $('goalSheetMonth').textContent = monthName;
+        renderGoalSheetValue();
+        goalSheetOverlay.classList.add('open');
+        goalSheet.classList.add('open');
+      }
+
+      function closeGoalSheet() {
+        goalSheetOverlay.classList.remove('open');
+        goalSheet.classList.remove('open');
+      }
+
+      goalEditBtn.addEventListener('click', openGoalSheet);
+      $('goalSheetCloseBtn').addEventListener('click', closeGoalSheet);
+      goalSheetOverlay.addEventListener('click', closeGoalSheet);
+      $('goalMinus').addEventListener('click', () => { goalSheetValue = Math.max(0, goalSheetValue - 1); renderGoalSheetValue(); });
+      $('goalPlus').addEventListener('click', () => { goalSheetValue = Math.min(300, goalSheetValue + 1); renderGoalSheetValue(); });
+      goalChips.addEventListener('click', (e) => {
+        const chip = (e.target as HTMLElement).closest<HTMLButtonElement>('.hour-chip');
+        if (!chip) return;
+        goalSheetValue = Number(chip.dataset.goal);
+        renderGoalSheetValue();
+      });
+
+      $('goalSaveUsualBtn').addEventListener('click', async () => {
+        const { error } = await supabase
+          .from('planner_settings')
+          .upsert({ user_id: userId, monthly_goal: goalSheetValue, updated_at: new Date().toISOString() });
+        if (error) {
+          console.error('GOAL_SAVE_ERROR:', error);
+          showToast("Couldn't save your goal. Try again.", 'error');
+          return;
+        }
+        usualGoal = goalSheetValue;
+        // This month follows the usual goal again
+        if (monthGoal !== null) {
+          await supabase.from('planner_months').update({ goal: null }).eq('user_id', userId).eq('month', monthStart);
+          monthGoal = null;
+        }
+        closeGoalSheet();
+        updateDashboardAndCalendar();
+        showToast(`Usual goal set to ${usualGoal}h`);
+      });
+
+      $('goalSaveMonthBtn').addEventListener('click', async () => {
+        const { error } = await supabase
+          .from('planner_months')
+          .upsert({ user_id: userId, month: monthStart, goal: goalSheetValue }, { onConflict: 'user_id,month' });
+        if (error) {
+          console.error('MONTH_GOAL_SAVE_ERROR:', error);
+          showToast("Couldn't save your goal. Try again.", 'error');
+          return;
+        }
+        monthGoal = goalSheetValue;
+        closeGoalSheet();
+        updateDashboardAndCalendar();
+        showToast(`${monthName} goal set to ${monthGoal}h`);
+      });
 
       // --- MONTH HEADER & GRID ---
       function goToMonth(search: string) {
@@ -1075,6 +1356,7 @@ export const prerender = true;
 
       enableDragToClose(entryModal, entryModalOverlay, closeEntryModal);
       enableDragToClose(yearPlanSheet, yearPlanOverlay, closeYearPlanSheet);
+      enableDragToClose(goalSheet, goalSheetOverlay, closeGoalSheet);
 
       planYearBtn.addEventListener('click', openYearPlanSheet);
       yearPlanCloseBtn.addEventListener('click', closeYearPlanSheet);
@@ -1178,18 +1460,31 @@ export const prerender = true;
       const session = await getBrowserSession();
       if (!session) return; // redirecting to /login
       supabase = session.db;
+      userId = session.userId;
 
-      const { data, error } = await supabase
-        .from('planner_logs')
-        .select('*')
-        .gte('date', `${monthPrefix}-01`)
-        .lte('date', `${monthPrefix}-${pad(daysInMonth)}`)
-        .order('date', { ascending: false });
-      if (error) {
-        console.error('PLANNER_FETCH_ERROR:', error);
+      const [logsRes, settingsRes, monthRes] = await Promise.all([
+        supabase
+          .from('planner_logs')
+          .select('*')
+          .gte('date', `${monthPrefix}-01`)
+          .lte('date', `${monthPrefix}-${pad(daysInMonth)}`)
+          .order('date', { ascending: false }),
+        supabase.from('planner_settings').select('monthly_goal').maybeSingle(),
+        supabase.from('planner_months').select('goal, studies').eq('month', monthStart).maybeSingle(),
+      ]);
+      if (logsRes.error) {
+        console.error('PLANNER_FETCH_ERROR:', logsRes.error);
         showToast("Couldn't load your entries. Reload to try again.", 'error');
       }
-      logs = data ?? [];
+      if (settingsRes.error) console.error('SETTINGS_FETCH_ERROR:', settingsRes.error);
+      if (monthRes.error) console.error('MONTH_FETCH_ERROR:', monthRes.error);
+      logs = logsRes.data ?? [];
+      if (settingsRes.data) usualGoal = Number(settingsRes.data.monthly_goal);
+      if (monthRes.data) {
+        monthGoal = monthRes.data.goal === null ? null : Number(monthRes.data.goal);
+        studies = monthRes.data.studies ?? 0;
+      }
+      renderStudies();
       renderLogList();
       updateDashboardAndCalendar();
       finishNavProgress();
