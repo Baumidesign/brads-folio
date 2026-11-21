@@ -44,6 +44,11 @@ export const prerender = true;
     :global(.hours-credit-planned) { border: 1px dashed #fbbf24; color: #fbbf24; font-size: 0.7rem; padding: 2px; border-radius: 4px; margin-top: 2px; text-align: center; }
     .stat-sub { font-size: 0.75rem; color: #a1a1aa; margin-top: 0.35rem; }
     .stat-value.small { font-size: 1.6rem; margin-top: 0.35rem; }
+
+    /* Month / Service year toggle (same look on /planner/year/) */
+    .view-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; background: #27272a; border-radius: 10px; padding: 3px; margin-bottom: 1rem; }
+    .view-toggle a { text-align: center; padding: 0.5rem; border-radius: 8px; color: #a1a1aa; font-size: 0.875rem; font-weight: 600; text-decoration: none; }
+    .view-toggle a[aria-current="page"] { background: #3f3f46; color: #fafafa; }
     .stat-of { font-size: 0.95rem; color: #a1a1aa; font-weight: 500; }
 
     /* Goal card */
@@ -495,6 +500,10 @@ export const prerender = true;
 
 
   <div class="container">
+    <nav class="view-toggle" aria-label="View">
+      <a href="/planner/" aria-current="page">Month</a>
+      <a href="/planner/year/" id="yearViewLink">Service year</a>
+    </nav>
     <div class="month-nav">
       <button type="button" id="prevMonthBtn">&larr; Prev</button>
       <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
@@ -1110,6 +1119,12 @@ export const prerender = true;
         const todayBtn = document.getElementById('todayBtn') as HTMLButtonElement;
         todayBtn.hidden = isCurrentMonth;
         todayBtn.addEventListener('click', () => goToMonth(''));
+
+        // Service year runs Sep–Aug and is named after the year it ends in
+        const sy = currentMonth >= 8 ? currentYear + 1 : currentYear;
+        const yearLink = document.getElementById('yearViewLink') as HTMLAnchorElement;
+        yearLink.href = `/planner/year/?sy=${sy}`;
+        yearLink.addEventListener('click', () => startNavProgress());
       }
 
       // Empty day boxes; updateDashboardAndCalendar() adds the hour pills.

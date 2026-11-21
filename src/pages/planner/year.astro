@@ -1,0 +1,272 @@
+---
+import BottomNav from '../../components/BottomNav.astro';
+
+// Service year (Sep–Aug) summary. Static page; auth and data load in the
+// browser like the other planner pages (see src/lib/browserSession.ts).
+export const prerender = true;
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-title" content="Yo Planner" />
+  <title>Service year · Yo Planner</title>
+  <style>
+    body { background: #09090b; color: #fafafa; font-family: system-ui, -apple-system, sans-serif; padding: 1rem; padding-bottom: calc(176px + env(safe-area-inset-bottom)); margin: 0; }
+    .container { max-width: 950px; margin: 0 auto; }
+
+    .view-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; background: #27272a; border-radius: 10px; padding: 3px; margin-bottom: 1rem; }
+    .view-toggle a { text-align: center; padding: 0.5rem; border-radius: 8px; color: #a1a1aa; font-size: 0.875rem; font-weight: 600; text-decoration: none; }
+    .view-toggle a[aria-current="page"] { background: #3f3f46; color: #fafafa; }
+
+    .year-nav { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .year-nav a { background: #27272a; color: white; padding: 0.6rem 1rem; border-radius: 6px; font-weight: bold; text-decoration: none; font-size: 0.9rem; }
+    .year-nav h2 { margin: 0; font-size: 1.25rem; text-align: center; }
+    .year-nav small { display: block; font-size: 0.75rem; font-weight: 500; color: #a1a1aa; margin-top: 2px; }
+
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 10px; }
+    .label { font-size: 0.75rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
+    /* 12-month strip, links built by client JS */
+    .months { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; }
+    :global(.m) { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; border-radius: 8px; text-decoration: none; color: #71717a; font-size: 0.7rem; font-weight: 600; }
+    :global(.m b) { font-size: 0.85rem; color: #52525b; }
+    :global(.m.met b) { color: #4ade80; }
+    :global(.m.short b) { color: #fbbf24; }
+    :global(.m.now) { background: #1e293b; color: #fafafa; }
+    :global(.m.now b) { color: #60a5fa; }
+    .legend { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; margin-top: 0.6rem; font-size: 0.7rem; color: #71717a; }
+    .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+
+    .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
+    .big { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.3rem; }
+    #total { font-size: 2rem; font-weight: bold; }
+    .of { color: #a1a1aa; }
+    .status { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; text-align: right; padding-top: 2px; }
+    :global(.status.behind), :global(.neg) { color: #f87171; }
+    :global(.status.ok), :global(.pos) { color: #4ade80; }
+    .bar { position: relative; height: 8px; background: #27272a; border-radius: 4px; margin: 0.75rem 0 0.5rem; }
+    .bar-ministry, .bar-credit { position: absolute; top: 0; bottom: 0; width: 0; }
+    .bar-ministry { left: 0; background: #2563eb; border-radius: 4px 0 0 4px; }
+    .bar-credit { background: #f59e0b; }
+    .bar-mark { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: #fafafa; border-radius: 1px; }
+
+    .rows { margin-top: 0.4rem; }
+    .row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid #27272a; font-size: 0.95rem; }
+    .row:last-child { border-bottom: none; }
+    .row span { color: #a1a1aa; }
+    .row[hidden] { display: none; }
+    .note { font-size: 0.75rem; color: #71717a; margin: 0.5rem 0.25rem 0; line-height: 1.5; }
+    .error { color: #f87171; font-size: 0.85rem; margin: 0 0 1rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="view-toggle" aria-label="View">
+      <a href="/planner/" id="monthViewLink">Month</a>
+      <a href="/planner/year/" aria-current="page">Service year</a>
+    </nav>
+
+    <div class="year-nav">
+      <a id="prevYear" href="#" aria-label="Previous service year">&larr;</a>
+      <h2><span id="yearLabel">&nbsp;</span><small id="yearRange">&nbsp;</small></h2>
+      <a id="nextYear" href="#" aria-label="Next service year">&rarr;</a>
+    </div>
+
+    <p id="loadError" class="error" hidden>Couldn't load your hours. Reload to try again.</p>
+
+    <section class="card" aria-label="Months">
+      <div class="months" id="months"></div>
+      <div class="legend">
+        <span><i style="background:#4ade80"></i>50h+</span>
+        <span><i style="background:#fbbf24"></i>under 50h</span>
+        <span><i style="background:#60a5fa"></i>this month</span>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Year totals">
+      <div class="top">
+        <div>
+          <div class="label" id="totalHeading">Year so far</div>
+          <div class="big"><span id="total">–</span><span class="of">of 600h</span></div>
+        </div>
+        <div id="status" class="status"></div>
+      </div>
+      <div class="bar" aria-hidden="true">
+        <div id="barMinistry" class="bar-ministry"></div>
+        <div id="barCredit" class="bar-credit"></div>
+        <div id="barMark" class="bar-mark" hidden></div>
+      </div>
+      <div class="rows">
+        <div class="row"><span>Ministry</span><b id="ministry">–</b></div>
+        <div class="row"><span>Credit</span><b id="credit">–</b></div>
+        <div class="row"><span>Average a month</span><b id="average">–</b></div>
+        <div class="row"><span>Hours left</span><b id="left">–</b></div>
+        <div class="row" id="neededRow"><span id="neededLabel">To reach 600h</span><b id="needed">–</b></div>
+        <div class="row"><span id="balanceLabel">Compared with 50h a month</span><b id="balance">–</b></div>
+        <div class="row"><span>Studies (average / highest)</span><b id="studies">–</b></div>
+      </div>
+    </section>
+    <p class="note">Credit counts up to 55h a month and never reduces your ministry hours. Planned hours aren't included. Tap a month to open it.</p>
+  </div>
+
+  <BottomNav />
+
+  <script>
+    import { getBrowserSession } from '../../lib/browserSession';
+    import { startNavProgress, finishNavProgress } from '../../lib/navProgress';
+    import { countedHours, fmtHours } from '../../lib/ministryMath';
+
+    const YEAR_GOAL = 600;
+    const MONTH_GOAL = 50;
+    const LETTERS = ['S', 'O', 'N', 'D', 'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A'];
+
+    const $ = (id: string) => document.getElementById(id) as HTMLElement;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const pct = (h: number) => `${Math.min(100, Math.max(0, (h / YEAR_GOAL) * 100))}%`;
+    const aheadBehind = (h: number) => (Math.abs(h) < 0.25 ? 'Right on pace' : `${fmtHours(Math.abs(h))} ${h > 0 ? 'ahead' : 'behind'}`);
+
+    // Service year is named after the year it ends in: 2027 = Sep 2026 – Aug 2027
+    const now = new Date();
+    const currentSy = now.getMonth() >= 8 ? now.getFullYear() + 1 : now.getFullYear();
+    const urlSy = parseInt(new URLSearchParams(location.search).get('sy') ?? '', 10);
+    const sy = Number.isFinite(urlSy) ? urlSy : currentSy;
+
+    // The 12 months in order, with where each sits relative to today
+    const nowIndex = now.getFullYear() * 12 + now.getMonth();
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const year = i < 4 ? sy - 1 : sy;
+      const month = (8 + i) % 12;
+      const index = year * 12 + month;
+      return { year, month, key: `${year}-${pad(month + 1)}`, tense: Math.sign(index - nowIndex), ministry: 0, credit: 0, studies: 0 };
+    });
+
+    function renderHeader() {
+      $('yearLabel').textContent = `Service year ${sy}`;
+      $('yearRange').textContent = `Sep ${sy - 1} – Aug ${sy}`;
+      document.title = `Service year ${sy} · Yo Planner`;
+      ($('prevYear') as HTMLAnchorElement).href = `?sy=${sy - 1}`;
+      ($('nextYear') as HTMLAnchorElement).href = `?sy=${sy + 1}`;
+      // Month toggle goes back to the current month if it's in this year, else September
+      const back = sy === currentSy ? '' : `?month=8&year=${sy - 1}`;
+      ($('monthViewLink') as HTMLAnchorElement).href = `/planner/${back}`;
+      document.querySelectorAll('.year-nav a, .view-toggle a').forEach(a => a.addEventListener('click', () => startNavProgress()));
+    }
+
+    function render() {
+      // Month strip
+      const strip = $('months');
+      strip.replaceChildren(...months.map(m => {
+        const counted = countedHours(m.ministry, m.credit);
+        const a = document.createElement('a');
+        a.href = `/planner/?month=${m.month}&year=${m.year}`;
+        a.className = 'm' + (m.tense === 0 ? ' now' : m.tense < 0 ? (counted >= MONTH_GOAL ? ' met' : ' short') : '');
+        a.setAttribute('aria-label', `${new Date(m.year, m.month, 1).toLocaleString('en-AU', { month: 'long' })}: ${fmtHours(counted)}`);
+        const letter = document.createElement('span');
+        letter.textContent = LETTERS[(m.month + 4) % 12];
+        const hours = document.createElement('b');
+        hours.textContent = m.tense > 0 ? '–' : String(Math.round(counted));
+        a.append(letter, hours);
+        a.addEventListener('click', () => startNavProgress());
+        return a;
+      }));
+
+      // Year totals
+      const started = months.filter(m => m.tense <= 0);
+      const finished = months.filter(m => m.tense < 0).length;
+      const ministry = started.reduce((s, m) => s + m.ministry, 0);
+      const total = started.reduce((s, m) => s + countedHours(m.ministry, m.credit), 0);
+      const creditCounted = total - ministry;
+      const creditLogged = started.reduce((s, m) => s + m.credit, 0);
+      const left = Math.max(0, YEAR_GOAL - total);
+      const yearOver = finished === 12;
+
+      // Where you'd be today at 50h a month (this month pro-rata by day)
+      const current = months.find(m => m.tense === 0);
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const expected = MONTH_GOAL * (finished + (current ? now.getDate() / daysInMonth : 0));
+      const balance = total - expected;
+
+      $('totalHeading').textContent = yearOver ? 'Year total' : started.length ? 'Year so far' : 'Not started';
+      $('total').textContent = fmtHours(total);
+      $('barMinistry').style.width = pct(ministry);
+      $('barCredit').style.left = pct(ministry);
+      $('barCredit').style.width = pct(Math.min(total, YEAR_GOAL) - Math.min(ministry, YEAR_GOAL));
+      const mark = $('barMark');
+      mark.hidden = !started.length || yearOver;
+      mark.style.left = pct(expected);
+
+      const status = $('status');
+      status.className = 'status';
+      status.textContent = '';
+      if (total >= YEAR_GOAL) {
+        status.textContent = 'Goal reached ✓';
+        status.classList.add('ok');
+      } else if (started.length) {
+        status.textContent = yearOver ? `${fmtHours(left)} short` : balance >= -0.25 ? 'On track' : `${fmtHours(-balance)} behind`;
+        status.classList.add(balance >= -0.25 && !yearOver ? 'ok' : 'behind');
+      }
+
+      $('ministry').textContent = fmtHours(ministry);
+      $('credit').textContent = creditLogged > creditCounted
+        ? `${fmtHours(creditCounted)} of ${fmtHours(creditLogged)}`
+        : fmtHours(creditCounted);
+      $('average').textContent = started.length ? fmtHours(total / started.length) : '–';
+      $('left').textContent = fmtHours(left);
+
+      const remaining = 12 - finished; // includes this month
+      $('neededRow').hidden = yearOver || !left;
+      $('neededLabel').textContent = `To reach 600h (${remaining === 1 ? 'this month' : `${remaining} months left`})`;
+      $('needed').textContent = remaining ? `${fmtHours(left / remaining)} a month` : '–';
+
+      const bal = $('balance');
+      bal.textContent = !started.length ? '–' : yearOver ? (total >= YEAR_GOAL ? `${fmtHours(total - YEAR_GOAL)} over` : `${fmtHours(YEAR_GOAL - total)} short`) : aheadBehind(balance);
+      $('balanceLabel').textContent = yearOver ? 'Compared with 600h' : 'Compared with 50h a month';
+      bal.className = !started.length ? '' : (yearOver ? total - YEAR_GOAL : balance) >= -0.25 ? 'pos' : 'neg';
+
+      const studyMonths = started.map(m => m.studies);
+      const avgStudies = studyMonths.length ? studyMonths.reduce((s, n) => s + n, 0) / studyMonths.length : 0;
+      $('studies').textContent = studyMonths.length
+        ? `${Math.round(avgStudies * 10) / 10} / ${Math.max(...studyMonths)}`
+        : '–';
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      startNavProgress(35);
+      renderHeader();
+      render();
+
+      const session = await getBrowserSession();
+      if (!session) return; // redirecting to /login
+      const db = session.db;
+      const from = `${sy - 1}-09-01`;
+      const to = `${sy}-08-31`;
+
+      const [logsRes, monthsRes] = await Promise.all([
+        db.from('planner_logs').select('date, hours, kind').eq('is_planned', false).gte('date', from).lte('date', to),
+        db.from('planner_months').select('month, studies').gte('month', from).lte('month', to),
+      ]);
+      if (logsRes.error || monthsRes.error) {
+        console.error('YEAR_FETCH_ERROR:', logsRes.error ?? monthsRes.error);
+        $('loadError').hidden = false;
+      }
+
+      const byKey = new Map(months.map(m => [m.key, m]));
+      (logsRes.data ?? []).forEach(log => {
+        const m = byKey.get(log.date.slice(0, 7));
+        if (!m) return;
+        if (log.kind === 'credit') m.credit += Number(log.hours) || 0;
+        else m.ministry += Number(log.hours) || 0;
+      });
+      (monthsRes.data ?? []).forEach(row => {
+        const m = byKey.get(row.month.slice(0, 7));
+        if (m) m.studies = row.studies ?? 0;
+      });
+
+      render();
+      finishNavProgress();
+    });
+  </script>
+</body>
+</html>
