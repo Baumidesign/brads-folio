@@ -1,8 +1,8 @@
 ---
 title: Calibration System
 publishDate: 2026-11-01 00:00:00
-img: /assets/case-study.jpg
-img_alt: Calibration System
+img: /assets/case-study-worksheet.webp
+img_alt: A completed torque wrench worksheet in the new calibration app, with five readings per setting and a pass result.
 description: |
   Rebuilding a calibration lab's core system: from a decade-old Access database, to Power Apps, to a custom web app.
 role: Designed the data model and interface, and building the system end to end.
@@ -22,6 +22,12 @@ tags:
 # until an image is added.
 story:
   eyebrow: Case study · In progress
+  heroImg: /assets/case-study-eras.webp
+  heroImg_alt: >-
+    Three versions of the system, left to right. Before: an Access database
+    table with text categories. Interim: a Power Apps form inside fixed
+    platform layouts. Now: a custom web app showing a pressure gauge record
+    that has passed, ready to issue a certificate.
 
   stats:
     - value: 10+
@@ -52,6 +58,11 @@ story:
       body: >-
         React and TypeScript on PostgreSQL. Full control over the interface, so
         screens follow how technicians actually work.
+      img: /assets/case-study-worksheet.webp
+      img_alt: >-
+        A completed torque wrench worksheet in the new app. Three settings,
+        each with its target, tolerance, five individual readings, aggregate,
+        variance and a pass result.
 
   highlightsHeading: What the rebuild made possible
   highlights:
