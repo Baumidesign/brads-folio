@@ -51,39 +51,73 @@ export const prerender = true;
     .view-toggle a[aria-current="page"] { background: #3f3f46; color: #fafafa; }
     .stat-of { font-size: 0.95rem; color: #a1a1aa; font-weight: 500; }
 
+    /* Month header: round arrows */
+    .month-nav { margin-bottom: 0.9rem; }
+    .month-nav .nav-arrow {
+      width: 38px; height: 38px; padding: 0; border-radius: 50%; display: grid; place-items: center;
+      font-size: 1.5rem; line-height: 1; font-weight: 400; touch-action: manipulation;
+    }
+    .month-title { margin: 0; display: flex; align-items: center; gap: 10px; font-size: 1.25rem; }
+    .month-nav .today-btn { font-size: 0.7rem; background: #2563eb; padding: 4px 8px; border-radius: 4px; }
+    .month-nav .today-btn[hidden] { display: none; }
+
     /* Goal card */
-    .goal-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 10px; }
-    .goal-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
-    .goal-big { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.3rem; }
-    #goalDone { font-size: 2rem; font-weight: bold; }
+    .goal-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 8px; }
+    .goal-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
+    .goal-big { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.4rem; }
+    #goalDone { font-size: 1.9rem; font-weight: bold; }
     .goal-of {
       background: none; border: none; padding: 0; color: #a1a1aa; font-family: inherit; font-size: 1rem;
       cursor: pointer; text-decoration: underline dotted #52525b; text-underline-offset: 4px; touch-action: manipulation;
     }
-    .goal-status { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; text-align: right; padding-top: 2px; }
-    /* Status classes are set by client JS */
-    :global(.goal-status.behind) { color: #f87171; }
-    :global(.goal-status.ok) { color: #4ade80; }
-    .goal-bar { position: relative; height: 8px; background: #27272a; border-radius: 4px; margin: 0.75rem 0 0.45rem; }
-    .goal-bar-ministry, .goal-bar-credit { position: absolute; top: 0; bottom: 0; width: 0; }
-    .goal-bar-ministry { left: 0; background: #2563eb; border-radius: 4px 0 0 4px; }
+    .goal-status { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; text-align: right; white-space: nowrap; }
+    /* State classes below are set by client JS */
+    :global(.goal-status.behind), :global(.goal-verdict.behind) { color: #f87171; }
+    :global(.goal-status.ok), :global(.goal-verdict.ok) { color: #4ade80; }
+    .goal-bar { position: relative; height: 10px; background: #27272a; border-radius: 5px; margin: 0.7rem 0 0.6rem; overflow: hidden; }
+    .goal-bar-ministry, .goal-bar-credit, .goal-bar-planned { position: absolute; top: 0; bottom: 0; width: 0; }
+    .goal-bar-ministry { left: 0; background: #2563eb; }
     .goal-bar-credit { background: #f59e0b; }
-    .goal-bar-mark { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: #fafafa; border-radius: 1px; }
-    .goal-note { font-size: 0.75rem; color: #a1a1aa; }
-    .goal-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 0.75rem; }
-    .goal-stats[hidden] { display: none; }
-    .goal-stats > div { background: #1f1f23; border-radius: 8px; padding: 0.5rem; text-align: center; }
-    .goal-stats b { display: block; font-size: 1.05rem; }
-    .goal-stats span { font-size: 0.7rem; color: #a1a1aa; }
+    .goal-bar-planned { background: repeating-linear-gradient(135deg, rgba(96, 165, 250, 0.55) 0 4px, rgba(96, 165, 250, 0.2) 4px 8px); }
+    .goal-bar-mark { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fafafa; }
+    .goal-line { display: flex; flex-wrap: wrap; font-size: 0.85rem; color: #d4d4d8; }
+    .goal-line b { color: #fafafa; }
+    .goal-line .dot { color: #52525b; margin: 0 0.4rem; }
+    .goal-line[hidden], .goal-note[hidden], .goal-plans[hidden], .goal-key[hidden], .goal-key span[hidden] { display: none; }
+    .goal-note { font-size: 0.75rem; color: #a1a1aa; margin-top: 0.35rem; }
+    .goal-plans {
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.25rem 0.75rem;
+      margin-top: 0.55rem; padding-top: 0.55rem; border-top: 1px solid #27272a; font-size: 0.85rem; color: #a1a1aa;
+    }
+    .goal-plans b { color: #fafafa; }
+    .goal-key { display: flex; flex-wrap: wrap; gap: 0.25rem 0.8rem; margin-top: 0.45rem; font-size: 0.68rem; color: #71717a; }
+    .goal-key i { display: inline-block; width: 10px; height: 6px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+    .goal-key .key-done { background: #2563eb; }
+    .goal-key .key-planned { background: repeating-linear-gradient(135deg, rgba(96, 165, 250, 0.7) 0 3px, rgba(96, 165, 250, 0.25) 3px 6px); }
+    .goal-key .key-today { width: 2px; height: 9px; background: #fafafa; }
     .goal-month-btn { background: #27272a; border: none; font-weight: 600; cursor: pointer; color: #fafafa; }
     .goal-sheet-hint { margin: 0; font-size: 0.8rem; color: #71717a; text-align: center; }
 
-    .studies-stepper { display: flex; align-items: center; justify-content: center; gap: 0.9rem; }
+    /* Studies: one slim row */
+    .studies-row {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 0.45rem 0.6rem 0.45rem 1rem;
+    }
+    .studies-row > span { font-weight: 600; color: #d4d4d8; font-size: 0.95rem; }
+    .studies-stepper { display: flex; align-items: center; gap: 0.9rem; }
+    #studiesValue { font-size: 1.15rem; min-width: 1.2em; text-align: center; }
     .studies-btn {
-      width: 32px; height: 32px; margin-top: 0.35rem; border-radius: 50%; border: none; background: #3f3f46;
+      width: 32px; height: 32px; border-radius: 50%; border: none; background: #3f3f46;
       color: #fafafa; font-size: 1.1rem; font-weight: bold; cursor: pointer; touch-action: manipulation;
     }
     .studies-btn:disabled { opacity: 0.35; cursor: default; }
+
+    /* Year planning: a small link, not a big strip */
+    .plan-year-row { display: flex; justify-content: flex-end; margin: 0.6rem 0 0.2rem; }
+    .plan-year-link {
+      background: none; border: none; padding: 0.35rem 0.1rem; color: #60a5fa; font-family: inherit;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; touch-action: manipulation;
+    }
 
     /* Entries list — week groups and cards are built by client JS, hence :global() */
     #logListContainer { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -505,59 +539,56 @@ export const prerender = true;
       <a href="/planner/year/" id="yearViewLink">Service year</a>
     </nav>
     <div class="month-nav">
-      <button type="button" id="prevMonthBtn">&larr; Prev</button>
-      <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+      <button type="button" id="prevMonthBtn" class="nav-arrow" aria-label="Previous month">&lsaquo;</button>
+      <h2 class="month-title">
         <span id="monthLabel">&nbsp;</span>
-        <button type="button" id="todayBtn" hidden style="font-size: 0.7rem; background: #2563eb; padding: 4px 8px; border-radius: 4px;">Today</button>
+        <button type="button" id="todayBtn" class="today-btn" hidden>Today</button>
       </h2>
-      <button type="button" id="nextMonthBtn">Next &rarr;</button>
+      <button type="button" id="nextMonthBtn" class="nav-arrow" aria-label="Next month">&rsaquo;</button>
     </div>
-    
-    <!-- Goal card: filled in by updateDashboardAndCalendar() -->
+
+    <!-- Goal card: filled in by renderGoalCard() -->
     <section class="goal-card" aria-label="Monthly goal">
       <div class="goal-top">
-        <div>
-          <div class="stat-label" id="goalHeading">This month</div>
-          <div class="goal-big">
-            <span id="goalDone">–</span>
-            <button type="button" id="goalEditBtn" class="goal-of" disabled>of <span id="goalTarget">–</span>h goal <span aria-hidden="true">✎</span></button>
-          </div>
+        <div class="goal-big">
+          <span id="goalDone">–</span>
+          <button type="button" id="goalEditBtn" class="goal-of" disabled>of <span id="goalTarget">–</span>h <span aria-hidden="true">✎</span></button>
         </div>
         <div id="goalStatus" class="goal-status"></div>
       </div>
       <div class="goal-bar" aria-hidden="true">
         <div id="goalBarMinistry" class="goal-bar-ministry"></div>
         <div id="goalBarCredit" class="goal-bar-credit"></div>
+        <div id="goalBarPlanned" class="goal-bar-planned"></div>
         <div id="goalBarMark" class="goal-bar-mark" hidden></div>
       </div>
-      <div id="goalNote" class="goal-note">&nbsp;</div>
-      <div id="goalStats" class="goal-stats" hidden>
-        <div><b id="goalLeft">–</b><span>left</span></div>
-        <div><b id="goalDaysLeft">–</b><span>days left</span></div>
-        <div><b id="goalPerDay">–</b><span>per day</span></div>
+      <div id="goalStats" class="goal-line" hidden>
+        <span><b id="goalLeft">–</b> left</span><span class="dot">·</span><span><b id="goalDaysLeft">–</b> days</span><span class="dot">·</span><span><b id="goalPerDay">–</b> a day</span>
+      </div>
+      <div id="goalNote" class="goal-note" hidden></div>
+      <div id="goalPlans" class="goal-plans">
+        <span><span id="plannedLabel">With what's planned</span>: <b id="plannedValue">–</b></span>
+        <span id="plannedSub"></span>
+      </div>
+      <div id="goalKey" class="goal-key" aria-hidden="true">
+        <span><i class="key-done"></i>done</span>
+        <span><i class="key-planned"></i>planned</span>
+        <span id="goalKeyToday"><i class="key-today"></i>where you should be today</span>
       </div>
     </section>
 
-    <div class="dashboard">
-      <div class="stat-card planned">
-        <div class="stat-label" id="plannedLabel">Heading for</div>
-        <div class="stat-value small"><span id="plannedValue">–</span> <span class="stat-of">/ <span id="plannedGoal">–</span>h</span></div>
-        <div id="plannedSub" class="stat-sub">&nbsp;</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Studies</div>
-        <div class="studies-stepper">
-          <button type="button" id="studiesMinus" class="studies-btn" disabled aria-label="One fewer study">&#x2212;</button>
-          <div id="studiesValue" class="stat-value small">–</div>
-          <button type="button" id="studiesPlus" class="studies-btn" disabled aria-label="One more study">+</button>
-        </div>
+    <div class="studies-row">
+      <span>Studies</span>
+      <div class="studies-stepper">
+        <button type="button" id="studiesMinus" class="studies-btn" disabled aria-label="One fewer study">&#x2212;</button>
+        <b id="studiesValue">–</b>
+        <button type="button" id="studiesPlus" class="studies-btn" disabled aria-label="One more study">+</button>
       </div>
     </div>
 
-    <button type="button" id="planYearBtn" class="plan-year-strip">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8h16M4 8a2 2 0 012-2h12a2 2 0 012 2M4 8v10a2 2 0 002 2h12a2 2 0 002-2V8M8 4v4M16 4v4M12 12v6M9 15h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      Plan hours for the year
-    </button>
+    <div class="plan-year-row">
+      <button type="button" id="planYearBtn" class="plan-year-link">Plan hours for the year &rsaquo;</button>
+    </div>
 
     <div class="calendar-header">
       <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
@@ -745,7 +776,6 @@ export const prerender = true;
       const confirmDeleteBtn = document.getElementById('confirmDeleteBtn') as HTMLButtonElement;
       const logListContainer = document.getElementById('logListContainer') as HTMLDivElement;
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-      const goalHeading = $('goalHeading');
       const goalDone = $('goalDone');
       const goalTarget = $('goalTarget');
       const goalEditBtn = $<HTMLButtonElement>('goalEditBtn');
@@ -760,7 +790,10 @@ export const prerender = true;
       const goalPerDay = $('goalPerDay');
       const plannedLabel = $('plannedLabel');
       const plannedValue = $('plannedValue');
-      const plannedGoal = $('plannedGoal');
+      const goalBarPlanned = $('goalBarPlanned');
+      const goalPlans = $('goalPlans');
+      const goalKey = $('goalKey');
+      const goalKeyToday = $('goalKeyToday');
       const plannedSub = $('plannedSub');
       const studiesValue = $('studiesValue');
       const studiesMinus = $<HTMLButtonElement>('studiesMinus');
@@ -931,24 +964,38 @@ export const prerender = true;
         const creditCounted = done - month.actual;
         const left = Math.max(0, goal - done);
 
-        goalHeading.textContent = monthTense === 0 ? 'This month' : monthTense < 0 ? 'Month total' : 'Goal';
         goalDone.textContent = fmtHours(done);
         goalTarget.textContent = String(goal);
 
-        // Bar: ministry in blue, counted credit in orange
+        // With what's planned: a day with logged hours counts what was logged;
+        // a day from today on with nothing logged counts its plan.
+        const todayIso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+        let aheadMinistry = 0;
+        let aheadCredit = 0;
+        Object.entries(hoursByDay).forEach(([day, t]) => {
+          const iso = `${monthPrefix}-${pad(Number(day))}`;
+          if (t.actual + t.credit > 0 || iso < todayIso) return;
+          aheadMinistry += t.planned;
+          aheadCredit += t.creditPlanned;
+        });
+        const withPlans = countedHours(month.actual + aheadMinistry, month.credit + aheadCredit);
+
+        // Bar: ministry (blue), counted credit (orange), then planned (striped)
         const ministryShown = Math.min(month.actual, goal);
+        const doneShown = Math.min(done, goal);
         goalBarMinistry.style.width = pct(ministryShown, goal);
         goalBarCredit.style.left = pct(ministryShown, goal);
-        goalBarCredit.style.width = pct(Math.max(0, Math.min(done, goal) - ministryShown), goal);
+        goalBarCredit.style.width = pct(doneShown - ministryShown, goal);
+        goalBarPlanned.style.left = pct(doneShown, goal);
+        goalBarPlanned.style.width = monthTense < 0 ? '0%' : pct(Math.max(0, Math.min(withPlans, goal) - doneShown), goal);
 
-        // Note: the split, plus how much credit counted when the 55h limit kicks in
-        const parts = [`${fmtHours(month.actual)} ministry`];
+        // Credit split only when there's credit (and how much counted past the 55h limit)
+        goalNote.hidden = month.credit <= 0;
         if (month.credit > 0) {
-          parts.push(creditCounted < month.credit
+          goalNote.textContent = `${fmtHours(month.actual)} ministry · ` + (creditCounted < month.credit
             ? `${fmtHours(creditCounted)} of ${fmtHours(month.credit)} credit counts`
             : `${fmtHours(month.credit)} credit`);
         }
-        goalNote.textContent = parts.join(' · ');
 
         goalStatus.className = 'goal-status';
         goalStatus.textContent = '';
@@ -978,28 +1025,15 @@ export const prerender = true;
           goalStats.hidden = false;
         }
 
-        // Heading for: hours done plus what's still planned. A day with logged hours
-        // counts what was logged; a day from today on with nothing logged counts its plan.
-        const todayIso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-        let aheadMinistry = 0;
-        let aheadCredit = 0;
-        Object.entries(hoursByDay).forEach(([day, t]) => {
-          const iso = `${monthPrefix}-${pad(Number(day))}`;
-          if (t.actual + t.credit > 0 || iso < todayIso) return;
-          aheadMinistry += t.planned;
-          aheadCredit += t.creditPlanned;
-        });
-        const heading = countedHours(month.actual + aheadMinistry, month.credit + aheadCredit);
-        const stillPlanned = heading - done;
-
-        plannedLabel.textContent = monthTense < 0 ? 'Finished at' : 'Heading for';
-        plannedValue.textContent = fmtHours(heading);
-        plannedGoal.textContent = String(goal);
-        const diff = heading - goal;
-        const verdict = diff >= -0.25 ? 'on track ✓' : `${fmtHours(-diff)} short`;
-        plannedSub.textContent = monthTense < 0 ? (diff >= -0.25 ? 'Goal reached ✓' : `${fmtHours(-diff)} short`)
-          : stillPlanned <= 0 ? `Nothing planned yet · ${verdict}`
-          : `${fmtHours(done)} done + ${fmtHours(stillPlanned)} planned · ${verdict}`;
+        // Plans line and key: not shown for finished months
+        goalPlans.hidden = monthTense < 0;
+        goalKey.hidden = monthTense < 0;
+        goalKeyToday.hidden = monthTense !== 0;
+        plannedLabel.textContent = monthTense > 0 ? 'Planned' : "With what's planned";
+        plannedValue.textContent = fmtHours(withPlans);
+        const diff = withPlans - goal;
+        plannedSub.className = 'goal-verdict ' + (diff >= -0.25 ? 'ok' : 'behind');
+        plannedSub.textContent = diff >= -0.25 ? 'on track ✓' : `${fmtHours(-diff)} short`;
       }
 
       // --- STUDIES ---
