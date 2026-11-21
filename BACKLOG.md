@@ -30,6 +30,14 @@
 - To do: 7 of 10 contacts are on the map; the other 3 need a suburb added in Visits. Optional: remove `*.netlify.app` from the MapTiler key's allowed origins (previews stop showing the map).
 - **House numbers (idea, 2026-10-31):** the map style shows OpenStreetMap house numbers at zoom 18+, but OSM has almost none in the southern suburbs (checked: zero on a residential street there; ~9 in Norwood). Options: (1) satellite view toggle via MapTiler's free satellite/hybrid style — recommended; (2) small house-number label under each pin from the saved address; (3) both.
 
+### Home tab ("Today") — maybe, undecided (2026-11-21)
+- New first tab: compact goal summary (reuses `src/lib/ministryMath.ts`), 📌 pinned people, and the 5 people longest since a visit (skip "Not now"). Tap a person → their sheet.
+- Needs a `people.pinned` migration, a Pin toggle in PersonSheet, and a 5-tab bottom nav. Open question: should Home or Calendar be the screen the app opens on?
+- Mock-up made 2026-11-21 (screen 3 of the planner preview).
+
+### Invite friends from inside the app — to plan separately
+- Wanted 2026-11-21. Builds on the invite-only work above (needs the service role key server-side).
+
 ### Housekeeping
 - Migrations: the repo is now linked to the Supabase "Planner" project and new changes use CLI migrations. Still to do: rename `visits_people.sql` to the timestamped format (the CLI skips it), and capture the dashboard-created `planner_logs` table and policies in a baseline migration. The planned-per-day unique index from the handoff was never created.
 - Handoff QA: RLS isolation with two users, empty states, long addresses, mobile Safari.

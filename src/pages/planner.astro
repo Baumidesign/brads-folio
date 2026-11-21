@@ -531,7 +531,7 @@ export const prerender = true;
 
     <div class="dashboard">
       <div class="stat-card planned">
-        <div class="stat-label">Planned</div>
+        <div class="stat-label" id="plannedLabel">Heading for</div>
         <div class="stat-value small"><span id="plannedValue">–</span> <span class="stat-of">/ <span id="plannedGoal">–</span>h</span></div>
         <div id="plannedSub" class="stat-sub">&nbsp;</div>
       </div>
@@ -749,6 +749,7 @@ export const prerender = true;
       const goalLeft = $('goalLeft');
       const goalDaysLeft = $('goalDaysLeft');
       const goalPerDay = $('goalPerDay');
+      const plannedLabel = $('plannedLabel');
       const plannedValue = $('plannedValue');
       const plannedGoal = $('plannedGoal');
       const plannedSub = $('plannedSub');
@@ -898,7 +899,7 @@ export const prerender = true;
           hoursByDay[day][key] += log.hours || 0;
           month[key] += log.hours || 0;
         });
-        renderGoalCard(month);
+        renderGoalCard(month, hoursByDay);
         calendarGrid.querySelectorAll('.day-box[data-day]').forEach(dayBox => {
           const day = parseInt((dayBox as HTMLElement).dataset.day!, 10);
           const data = hoursByDay[day];
@@ -915,7 +916,7 @@ export const prerender = true;
       const currentGoal = () => monthGoal ?? usualGoal;
       const pct = (h: number, goal: number) => `${goal > 0 ? Math.min(100, (h / goal) * 100) : 0}%`;
 
-      function renderGoalCard(month: DayTotals) {
+      function renderGoalCard(month: DayTotals, hoursByDay: Record<number, DayTotals>) {
         const goal = currentGoal();
         const done = countedHours(month.actual, month.credit);
         const creditCounted = done - month.actual;
@@ -968,14 +969,28 @@ export const prerender = true;
           goalStats.hidden = false;
         }
 
-        // Planned vs goal (planned entries, same 55h credit rule)
-        const planned = countedHours(month.planned, month.creditPlanned);
-        plannedValue.textContent = fmtHours(planned);
+        // Heading for: hours done plus what's still planned. A day with logged hours
+        // counts what was logged; a day from today on with nothing logged counts its plan.
+        const todayIso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+        let aheadMinistry = 0;
+        let aheadCredit = 0;
+        Object.entries(hoursByDay).forEach(([day, t]) => {
+          const iso = `${monthPrefix}-${pad(Number(day))}`;
+          if (t.actual + t.credit > 0 || iso < todayIso) return;
+          aheadMinistry += t.planned;
+          aheadCredit += t.creditPlanned;
+        });
+        const heading = countedHours(month.actual + aheadMinistry, month.credit + aheadCredit);
+        const stillPlanned = heading - done;
+
+        plannedLabel.textContent = monthTense < 0 ? 'Finished at' : 'Heading for';
+        plannedValue.textContent = fmtHours(heading);
         plannedGoal.textContent = String(goal);
-        const diff = planned - goal;
-        plannedSub.textContent = planned === 0 ? 'Nothing planned yet'
-          : Math.abs(diff) < 0.25 ? 'Matches your goal'
-          : diff > 0 ? `${fmtHours(diff)} over goal` : `${fmtHours(-diff)} short of goal`;
+        const diff = heading - goal;
+        const verdict = diff >= -0.25 ? 'on track ✓' : `${fmtHours(-diff)} short`;
+        plannedSub.textContent = monthTense < 0 ? (diff >= -0.25 ? 'Goal reached ✓' : `${fmtHours(-diff)} short`)
+          : stillPlanned <= 0 ? `Nothing planned yet · ${verdict}`
+          : `${fmtHours(done)} done + ${fmtHours(stillPlanned)} planned · ${verdict}`;
       }
 
       // --- STUDIES ---
