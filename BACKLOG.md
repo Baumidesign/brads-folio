@@ -37,8 +37,24 @@
 
 ## Portfolio
 
-- **Calibration System case study:** live 2026-11-01 (`6779d73`, /work/case-study/). Still to do: add images (`heroImg` + per-phase/highlight `img` in `case-study.md`), confirm "What's next" items. Layout is reusable (e.g. a Yo Planner case study).
-- **Retitle `src/content/work/calibration-management.md`:** it's the marketing site, not the system.
-- **Refresh legacy case studies:** `charnwoodsa.md`, `atlanticletting.md`.
-- **Polish:** `og:image` / canonical / Twitter meta in `MainHead.astro`, unused images in `public/assets/`, nav contact link.
-- **Hero portrait:** replace the pre-composited image with a clean, higher-resolution photo (fixes slight edge softness).
+### Done (2026-11-21)
+- Hero gauge record (`b06cb21`), og:image + social meta + canonical (`8f09926`), B favicon, caption-style work cards, case study images (`411cc95`), legacy entries rewritten and reordered (`c6ce571`), Supabase wording replaced with PostgreSQL (`c775c39`).
+
+### Highest impact (needs input from Brad)
+- **Case study outcomes:** add 1–2 concrete results to the Calibration System case study (e.g. worksheet time before vs after, transcription errors, audit prep). Optional: a 10–15s muted screen recording of filling in a worksheet.
+- **Testimonial:** one quote from the current manager or a past client (Atlantic is the easiest ask). Can be unnamed, e.g. "Owner, Cape Town holiday letting business". Don't name Atlantic's owner without permission.
+- **Clear next step on services:** who it's for, what a first chat looks like, a booking link (e.g. Cal.com), optionally "projects typically start from…".
+
+### Quick wins (can do without input)
+- **Keep the planner out of search:** check `/planner`, `/auth`, visits and map pages are `noindex` and disallowed in `robots.txt`. Longer term, consider moving the planner to a subdomain.
+- **Per-page descriptions:** the fallback is still "The personal site of Bradley Baumann". Give every page its own title and description using search terms (e.g. "calibration software Australia"). Add `@astrojs/sitemap`.
+- **Thumbnail years:** Charnwood's thumbnail says 2016 (should be 2015) and calibrationmanagement.com.au's says 2018 (should be 2017). Remake them and convert the legacy `.jpg` thumbnails to WebP.
+
+### Later
+- **Articles:** 1–2 short posts in the niche, e.g. "Moving calibration records off spreadsheets" or "What auditors look for in calibration records".
+- **Flagship card:** restyle the Calibration System thumbnail to match the bold coloured cards, and/or make it full-width.
+- **App screenshots:** retake the dashboard with practice data (no real customer names) and the equipment record with a real-looking Make and Model. Crop out the sidebar (employer name and email).
+- **Analytics:** privacy-friendly analytics (Netlify Analytics or Plausible).
+- **Gauge record:** optional descending (↓) readings column.
+- **Open questions:** is "Since launch I've hosted…" still true for calibrationmanagement.com.au? Did Charnwood also use a custom theme?
+- **Cleanup:** unused assets (`public/assets/case-study.jpg`, untracked `case-study-torque.webp`). Keep `portrait-hero.png`, which is the avatar source. Delete the merged local `hero-gauge` branch.
