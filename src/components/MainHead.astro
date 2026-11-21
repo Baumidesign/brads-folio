@@ -4,17 +4,40 @@ import '../styles/global.css';
 interface Props {
 	title?: string | undefined;
 	description?: string | undefined;
+	// Social preview image (path under /public); defaults to the site-wide card
+	image?: string | undefined;
 }
 
 const {
 	title = 'Bradley Baumann: Personal Site',
 	description = 'The personal site of Bradley Baumann',
+	image = '/og-image.png',
 } = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const imageUrl = new URL(image, Astro.site);
 ---
 
 <meta charset="UTF-8" />
-<meta name="description" property="og:description" content={description} />
+<meta name="description" content={description} />
 <meta name="viewport" content="width=device-width" />
+<link rel="canonical" href={canonical} />
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Bradley Baumann" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Bradley Baumann — Software for Calibration & Compliance Businesses, beside an example pressure-gauge calibration record" />
+<meta property="og:locale" content="en_AU" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />
 <meta name="generator" content={Astro.generator} />
 <title>{title}</title>
 
