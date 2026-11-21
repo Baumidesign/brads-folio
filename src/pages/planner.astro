@@ -1142,7 +1142,9 @@ export const prerender = true;
         document.getElementById('monthLabel')!.textContent = `${name} ${currentYear}`;
         document.getElementById('entriesMonth')!.textContent = name;
         document.title = `${name} ${currentYear} · Yo Planner`;
-        document.getElementById('yearPlanTitle')!.textContent = `Plan hours for ${currentYear}`;
+        const short = (y: number, m: number) => `${new Date(y, m, 1).toLocaleString('en-AU', { month: 'short' })} ${y}`;
+        document.getElementById('yearPlanTitle')!.textContent =
+          `Plan hours: ${short(planMonths[0].year, planMonths[0].month)} – ${short(planLast.year, planLast.month)}`;
 
         const prev = new Date(currentYear, currentMonth - 1, 1);
         const next = new Date(currentYear, currentMonth + 1, 1);
@@ -1318,20 +1320,30 @@ export const prerender = true;
         return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       }
 
+      // The 12 months starting from the month being viewed (crosses into next year)
+      const planMonths = Array.from({ length: 12 }, (_, i) => {
+        const d = new Date(currentYear, currentMonth + i, 1);
+        return { year: d.getFullYear(), month: d.getMonth() };
+      });
+      const planFrom = isoOf(planMonths[0].year, planMonths[0].month, 1);
+      const planLast = planMonths[11];
+      const planTo = isoOf(planLast.year, planLast.month, new Date(planLast.year, planLast.month + 1, 0).getDate());
+
       function renderYearPlanGrid() {
-        yearPlanGrid.innerHTML = MONTH_NAMES.map((name, m) => {
-          const first = new Date(currentYear, m, 1).getDay();
-          const total = new Date(currentYear, m + 1, 0).getDate();
+        yearPlanGrid.innerHTML = planMonths.map(({ year, month: m }) => {
+          const first = new Date(year, m, 1).getDay();
+          const total = new Date(year, m + 1, 0).getDate();
           let cells = '';
           for (let i = 0; i < first; i++) cells += '<div></div>';
           for (let d = 1; d <= total; d++) {
-            const iso = isoOf(currentYear, m, d);
+            const iso = isoOf(year, m, d);
             const classes = ['mini-day'];
             if (yearPlanSelected.has(iso)) classes.push('selected');
             else if (yearPlanExisting.has(iso)) classes.push('has-existing');
             cells += `<div class="${classes.join(' ')}" data-iso="${iso}">${d}</div>`;
           }
-          return `<div class="mini-month"><div class="mini-month-label">${name}</div><div class="mini-month-grid">${cells}</div></div>`;
+          const label = m === 0 || year !== currentYear ? `${MONTH_NAMES[m]} ${year}` : MONTH_NAMES[m];
+          return `<div class="mini-month"><div class="mini-month-label">${label}</div><div class="mini-month-grid">${cells}</div></div>`;
         }).join('');
       }
 
@@ -1353,8 +1365,8 @@ export const prerender = true;
             .select('date')
             .eq('is_planned', true)
             .eq('kind', 'hours')
-            .gte('date', `${currentYear}-01-01`)
-            .lte('date', `${currentYear}-12-31`);
+            .gte('date', planFrom)
+            .lte('date', planTo);
           if (!error && data) {
             yearPlanExisting = new Set(data.map((row: { date: string }) => row.date));
           }
@@ -1365,13 +1377,6 @@ export const prerender = true;
         updateYearPlanHoursDisplay();
         yearPlanOverlay.classList.add('open');
         yearPlanSheet.classList.add('open');
-
-        // Start at the month being viewed rather than January
-        const body = yearPlanSheet.querySelector<HTMLElement>('.year-plan-body');
-        const monthEl = yearPlanGrid.querySelectorAll<HTMLElement>('.mini-month')[currentMonth];
-        if (body && monthEl) {
-          body.scrollTop = monthEl.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 8;
-        }
       }
 
       function closeYearPlanSheet() {
