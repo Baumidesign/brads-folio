@@ -72,7 +72,8 @@ export const prerender = true;
     }
     .goal-status { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; text-align: right; white-space: nowrap; }
     /* State classes below are set by client JS */
-    :global(.goal-status.behind), :global(.goal-verdict.behind) { color: #f87171; }
+    :global(.goal-status.behind) { color: #f87171; }
+    :global(.goal-verdict.behind) { color: #fbbf24; }
     :global(.goal-status.ok), :global(.goal-verdict.ok) { color: #4ade80; }
     .goal-bar { position: relative; height: 10px; background: #27272a; border-radius: 5px; margin: 0.7rem 0 0.6rem; overflow: hidden; }
     .goal-bar-ministry, .goal-bar-credit, .goal-bar-planned { position: absolute; top: 0; bottom: 0; width: 0; }
@@ -567,7 +568,7 @@ export const prerender = true;
       </div>
       <div id="goalNote" class="goal-note" hidden></div>
       <div id="goalPlans" class="goal-plans">
-        <span><span id="plannedLabel">With what's planned</span>: <b id="plannedValue">–</b></span>
+        <span><span id="plannedLabel">By month end</span>: <b id="plannedValue">–</b></span>
         <span id="plannedSub"></span>
       </div>
       <div id="goalKey" class="goal-key" aria-hidden="true">
@@ -1013,7 +1014,7 @@ export const prerender = true;
           const today = now.getDate();
           const expected = (goal * today) / daysInMonth;
           const gap = expected - done;
-          goalStatus.textContent = gap >= 0.25 ? `${fmtHours(gap)} behind` : 'On track';
+          goalStatus.textContent = gap >= 0.25 ? `${fmtHours(gap)} behind today` : 'On track today';
           goalStatus.classList.add(gap >= 0.25 ? 'behind' : 'ok');
           goalBarMark.style.left = pct(expected, goal);
           goalBarMark.hidden = false;
@@ -1029,11 +1030,11 @@ export const prerender = true;
         goalPlans.hidden = monthTense < 0;
         goalKey.hidden = monthTense < 0;
         goalKeyToday.hidden = monthTense !== 0;
-        plannedLabel.textContent = monthTense > 0 ? 'Planned' : "With what's planned";
+        plannedLabel.textContent = monthTense > 0 ? 'Planned' : 'By month end';
         plannedValue.textContent = fmtHours(withPlans);
         const diff = withPlans - goal;
         plannedSub.className = 'goal-verdict ' + (diff >= -0.25 ? 'ok' : 'behind');
-        plannedSub.textContent = diff >= -0.25 ? 'on track ✓' : `${fmtHours(-diff)} short`;
+        plannedSub.textContent = diff >= -0.25 ? `✓ your plans reach ${goal}h` : `${fmtHours(-diff)} short of ${goal}h`;
       }
 
       // --- STUDIES ---
