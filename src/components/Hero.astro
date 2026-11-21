@@ -9,14 +9,23 @@ interface Props {
 	titleHtml?: string;
 	tagline?: string;
 	align?: 'start' | 'center';
+	// Optional small round photo shown beside the eyebrow (decorative)
+	avatar?: string;
 }
 
-const { align = 'center', eyebrow, tagline, title, titleHtml } = Astro.props;
+const { align = 'center', avatar, eyebrow, tagline, title, titleHtml } = Astro.props;
 ---
 
 <div class:list={['hero stack gap-4', align]}>
 	<div class="stack gap-2">
-		{eyebrow && <p class="eyebrow">{eyebrow}</p>}
+		{
+			eyebrow && (
+				<p class:list={['eyebrow', { 'has-avatar': avatar }]}>
+					{avatar && <img class="avatar" src={avatar} alt="" width="40" height="40" />}
+					{eyebrow}
+				</p>
+			)
+		}
 		{titleHtml ? <h1 class="title" set:html={titleHtml} /> : <h1 class="title">{title}</h1>}
 		{tagline && <p class="tagline">{tagline}</p>}
 	</div>
@@ -45,6 +54,22 @@ const { align = 'center', eyebrow, tagline, title, titleHtml } = Astro.props;
 		color: var(--accent-regular);
 	}
 
+	.has-avatar {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.625rem;
+	}
+
+	.avatar {
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: 50%;
+		object-fit: cover;
+		object-position: 50% 12%;
+		box-shadow: 0 0 0 1px var(--accent-overlay);
+	}
+
 	.title {
 		font-size: var(--text-3xl);
 		color: var(--gray-0);
@@ -57,6 +82,10 @@ const { align = 'center', eyebrow, tagline, title, titleHtml } = Astro.props;
 
 		.start {
 			text-align: start;
+		}
+
+		.start .has-avatar {
+			justify-content: flex-start;
 		}
 
 		.start .eyebrow,

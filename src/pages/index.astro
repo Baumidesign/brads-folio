@@ -6,10 +6,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 // Component Imports
 import CallToAction from '../components/CallToAction.astro';
+import GaugeRecord from '../components/GaugeRecord.astro';
 import Grid from '../components/Grid.astro';
 import Hero from '../components/Hero.astro';
 import Icon from '../components/Icon.astro';
-import Pill from '../components/Pill.astro';
 import PortfolioPreview from '../components/PortfolioPreview.astro';
 
 // Page section components
@@ -35,25 +35,16 @@ const projects = (await getCollection('work'))
 			<header class="hero">
 				<Hero
 					eyebrow="Bradley Baumann"
+					avatar="/assets/avatar.webp"
 					title="Software for Calibration & Compliance Businesses"
 					titleHtml="Software for Calibration <span class='force-break'>&amp; Compliance Businesses</span>"
-					tagline="I specialize in calibration and internal management systems, where data integrity and user experience both have to be right. I also take on custom web applications and freelance work."
+					tagline="I specialise in calibration and internal management systems, where data integrity and user experience both have to be right. I also take on custom web applications and freelance work."
 					align="start"
 				>
-					<div class="roles">
-						<Pill variant="tag"><Icon icon="pencil-line" size="1.33em" /> Design</Pill>
-						<Pill variant="tag"><Icon icon="shapes" size="1.33em" /> Architect</Pill>
-						<Pill variant="tag"><Icon icon="terminal-window" size="1.33em" /> Build</Pill>
-					</div>
 					<p class="location">Based in Adelaide, South Australia · Working with clients Australia-wide</p>
 				</Hero>
 
-				<img
-					alt="A black and white portrait of Bradley Baumann"
-					width="347"
-					height="399"
-					src="/assets/portrait-hero.png"
-				/>
+				<GaugeRecord href="/work/case-study/" />
 			</header>
 
 			<Skills />
@@ -63,7 +54,7 @@ const projects = (await getCollection('work'))
 			<section class="section with-background with-cta">
 				<header class="section-header stack gap-2 lg:gap-4">
 					<h3>Selected Work</h3>
-					<p>Past client and freelance web projects. My current focus — a calibration management system I'm building now — will land here as a full case study soon.</p>
+					<p>My current calibration systems work, alongside past client and freelance web projects.</p>
 				</header>
 
 				<div class="gallery">
@@ -110,10 +101,6 @@ const projects = (await getCollection('work'))
 		gap: 2rem;
 	}
 
-	.roles {
-		display: none;
-	}
-
 	.location {
 		margin-top: 0.75rem;
 		font-size: var(--text-sm);
@@ -127,62 +114,40 @@ const projects = (await getCollection('work'))
 		font-size: var(--text-2xl);
 	}
 
+	/* More air between eyebrow, headline and subhead on this page */
+	.hero :global(.tagline) {
+		margin-top: 0.75rem;
+	}
+
 	/* Natural wrapping on mobile — the forced break only kicks in at the
 	   desktop breakpoint below. */
 	.hero :global(.force-break) {
 		display: inline;
 	}
 
-	.hero img {
-		/* Matches the source file's native ratio (347x399, trimmed of a
-		   transparent top margin) so object-fit has nothing to crop — the
-		   image already has its own rounded-card framing baked in, so we
-		   don't add a second, differently-curved border-radius on top of
-		   it (that mismatch was leaving a thin gap at the corners). */
-		aspect-ratio: 347 / 399;
-		object-fit: contain;
-		object-position: top;
-		/* box-shadow casts from the <img>'s rectangular box, not the PNG's
-		   transparent silhouette — with no border-radius to match it, that
-		   left a faint rectangular tint behind the rounded corners.
-		   drop-shadow follows the actual alpha shape instead, so the shadow
-		   hugs the card (and the cap) exactly. Same 4 layers/values as
-		   --shadow-md (src/styles/global.css), theme-aware. */
-		filter: var(--portrait-drop-shadow);
-	}
-
-	:root:not(.theme-dark) .hero img {
-		--portrait-drop-shadow: drop-shadow(0px 28px 11px rgba(9, 11, 17, 0.01))
-			drop-shadow(0px 16px 10px rgba(9, 11, 17, 0.03)) drop-shadow(0px 7px 7px rgba(9, 11, 17, 0.05))
-			drop-shadow(0px 2px 4px rgba(9, 11, 17, 0.06));
-	}
-
-	:root.theme-dark .hero img {
-		--portrait-drop-shadow: drop-shadow(0px 28px 11px rgba(255, 255, 255, 0.01))
-			drop-shadow(0px 16px 10px rgba(255, 255, 255, 0.03))
-			drop-shadow(0px 7px 7px rgba(255, 255, 255, 0.05)) drop-shadow(0px 2px 4px rgba(255, 255, 255, 0.06));
-	}
-
 	@media (min-width: 50em) {
-		.hero {
-			display: grid;
-			grid-template-columns: 7fr 3fr;
-			padding-inline: 2.5rem;
-			gap: 3.75rem;
-		}
-
-		.roles {
-			margin-top: 0.5rem;
-			display: flex;
-			gap: 0.5rem;
-		}
-
 		.hero :global(.title) {
-			font-size: var(--text-4xl);
+			font-size: var(--text-3xl);
 		}
 
 		.hero :global(.force-break) {
 			display: block;
+		}
+	}
+
+	/* Two columns only once there's room for both the H1 and the gauge card
+	   side by side; below this the card stacks under the copy. */
+	@media (min-width: 64em) {
+		.hero {
+			display: grid;
+			/* ~55/45 text to card; tops aligned so nothing floats above the H1 */
+			grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
+			align-items: start;
+			gap: 5rem;
+		}
+
+		.hero > :global(.gauge-record) {
+			justify-self: end;
 		}
 	}
 

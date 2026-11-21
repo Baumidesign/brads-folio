@@ -68,6 +68,16 @@
 		Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 	--font-body: 'Public Sans', var(--font-system);
 	--font-brand: Rubik, var(--font-system);
+	--font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+	/* Status colours (calibration record: pass / fail / adjusting) */
+	--status-ok: #138a4f;
+	--status-ok-bg: rgba(19, 138, 79, 0.1);
+	--status-bad: #d23b3b;
+	--status-bad-bg: rgba(210, 59, 59, 0.1);
+	--status-warn: #a86d12;
+	--status-warn-bg: rgba(183, 121, 31, 0.12);
+	--status-run-bg: rgba(66, 75, 255, 0.1);
 
 	/* Transitions */
 	--theme-transition: 0.2s ease-in-out;
@@ -113,6 +123,14 @@
 		0px 7px 7px rgba(255, 255, 255, 0.05), 0px 2px 4px rgba(255, 255, 255, 0.06);
 	--shadow-lg: 0px 62px 25px rgba(255, 255, 255, 0.01), 0px 35px 21px rgba(255, 255, 255, 0.05),
 		0px 16px 16px rgba(255, 255, 255, 0.1), 0px 4px 9px rgba(255, 255, 255, 0.12);
+
+	--status-ok: #3fcf8a;
+	--status-ok-bg: rgba(63, 207, 138, 0.12);
+	--status-bad: #ff6b6b;
+	--status-bad-bg: rgba(255, 107, 107, 0.12);
+	--status-warn: #f2b24c;
+	--status-warn-bg: rgba(242, 178, 76, 0.14);
+	--status-run-bg: rgba(66, 75, 255, 0.2);
 }
 
 html,

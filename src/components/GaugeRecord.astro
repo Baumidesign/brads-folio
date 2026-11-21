@@ -1,0 +1,608 @@
+---
+// Illustrative calibration record for the homepage hero: a dial pressure
+// gauge checked at four points, one found out of tolerance, adjusted, then
+// passed. Everything is rendered at build time (complete without JS); the
+// client script only toggles data attributes / text on these existing nodes,
+// so scoped styles keep applying.
+
+interface Props {
+	href?: string;
+}
+const { href } = Astro.props;
+
+const TOL = 10; // Class 1.0 on 0–1000 kPa = ±10 kPa
+const points = [
+	{ p: 250, found: 251.2 },
+	{ p: 500, found: 512.6, left: 500.4 },
+	{ p: 750, found: 749.1 },
+	{ p: 1000, found: 1003.8 },
+].map((r) => ({ ...r, ok: Math.abs(r.found - r.p) <= TOL }));
+
+const FINAL = 1003.8;
+const ang = (v: number) => -135 + (270 * v) / 1000;
+const pt = (deg: number, r: number) => {
+	const t = (deg * Math.PI) / 180;
+	return [100 + r * Math.sin(t), 100 - r * Math.cos(t)].map((n) => +n.toFixed(2));
+};
+
+const ticks = [];
+for (let v = 0; v <= 1000; v += 50) {
+	const major = v % 200 === 0;
+	const a = ang(v);
+	const [x1, y1] = pt(a, 80);
+	const [x2, y2] = pt(a, major ? 70 : 75);
+	const [tx, ty] = pt(a, 59);
+	ticks.push({ v, major, x1, y1, x2, y2, tx, ty: ty + 3 });
+}
+
+const tolArc = (p: number) => {
+	const [x1, y1] = pt(ang(p - TOL), 86);
+	const [x2, y2] = pt(ang(p + TOL), 86);
+	return `M${x1} ${y1} A86 86 0 0 1 ${x2} ${y2}`;
+};
+const fmt = (n: number) => n.toFixed(1);
+---
+
+<div class="gauge-record" data-gauge>
+	<div class="record" role="group" aria-label="Example calibration record for a pressure gauge">
+		<div class="head">
+			<div>
+				<p class="rec-title">Pressure Gauge</p>
+				<p class="meta">PG-2209 · 0–1000 kPa · Class 1.0 · Due Mar 2027</p>
+			</div>
+			<span class="status" data-status data-s="pass">Adjusted · Pass as left</span>
+		</div>
+
+		<div class="body">
+			<div class="dial" aria-hidden="true">
+				<svg viewBox="0 0 200 200">
+					<circle class="face" cx="100" cy="100" r="92"></circle>
+					<path class="arc" d="M43.43 156.57 A80 80 0 1 1 156.57 156.57"></path>
+					<path class="tol" data-tol d=""></path>
+					{
+						ticks.map((t) => (
+							<>
+								<line class:list={['tick', { major: t.major }]} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} />
+								{t.major && (
+									<text class="lbl" x={t.tx} y={t.ty}>
+										{t.v}
+									</text>
+								)}
+							</>
+						))
+					}
+					<text class="unit" x="100" y="72">kPa</text>
+					<text class="readout" data-readout x="100" y="172">{fmt(FINAL)}</text>
+					<g class="needle" data-needle style={`transform: rotate(${ang(FINAL)}deg)`}>
+						<line x1="100" y1="112" x2="100" y2="30"></line>
+					</g>
+					<circle class="hub" cx="100" cy="100" r="5"></circle>
+				</svg>
+			</div>
+
+			<div class="table-wrap">
+				<table>
+					<thead>
+						<tr><th scope="col">Point</th><th scope="col">As found</th><th scope="col">As left</th></tr>
+					</thead>
+					<tbody>
+						{
+							points.map((r) => (
+								<tr
+									data-row
+									data-p={r.p}
+									data-found={r.found}
+									data-left={r.left ?? ''}
+									data-arc={tolArc(r.p)}
+									data-ok={String(r.ok)}
+									data-f="shown"
+									data-l={r.left != null ? 'shown' : 'na'}
+								>
+									<td>{r.p}</td>
+									<td class="f">
+										<span class="pend" aria-hidden="true">———</span>
+										<span class="val">
+											{fmt(r.found)}{' '}
+											<span class:list={['mark', r.ok ? 'ok' : 'bad']}>{r.ok ? '✓' : '✗'}</span>
+										</span>
+									</td>
+									<td class="l">
+										<span class="pend" aria-hidden="true">———</span>
+										{r.left != null ? (
+											<span class="val">
+												{fmt(r.left)} <span class="mark ok">✓</span>
+											</span>
+										) : (
+											<span class="na">—</span>
+										)}
+									</td>
+								</tr>
+							))
+						}
+					</tbody>
+				</table>
+				<p class="unc">Tol ±{TOL} kPa · U = ±2.5 kPa (k=2)</p>
+			</div>
+		</div>
+
+		<p class="audit" data-audit>
+			<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+				<path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+			</svg>
+			Adjusted &amp; verified · B. Baumann · 10:42
+		</p>
+	</div>
+
+	<div class="under">
+		<span>Example record · illustrative data</span>
+		<span class="actions">
+			<button type="button" class="replay" data-replay>↻ Replay</button>
+			{href && <a href={href}>See the case study →</a>}
+		</span>
+	</div>
+</div>
+
+<script is:inline>
+	// Put the record into its pre-animation state before first paint, so the
+	// finished record doesn't flash and then reset. No-JS / reduced-motion
+	// visitors keep the finished record.
+	(function () {
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		var root = document.currentScript && document.currentScript.previousElementSibling;
+		if (!root || !root.hasAttribute('data-gauge')) return;
+		root.querySelectorAll('[data-row]').forEach(function (r) {
+			r.dataset.f = 'pending';
+			r.dataset.l = 'pending';
+		});
+		root.querySelector('[data-needle]').style.transform = 'rotate(-135deg)';
+		root.querySelector('[data-readout]').textContent = '0.0';
+		var s = root.querySelector('[data-status]');
+		s.dataset.s = 'run';
+		s.textContent = 'In progress';
+		root.querySelector('[data-audit]').classList.add('off');
+		root.dataset.queued = 'true';
+	})();
+</script>
+
+<script>
+	const ang = (v: number) => -135 + (270 * v) / 1000;
+	const fmt = (n: number) => n.toFixed(1);
+
+	function init(root: HTMLElement) {
+		const rows = [...root.querySelectorAll<HTMLTableRowElement>('[data-row]')];
+		const needle = root.querySelector<SVGGElement>('[data-needle]')!;
+		const readout = root.querySelector<SVGTextElement>('[data-readout]')!;
+		const status = root.querySelector<HTMLElement>('[data-status]')!;
+		const audit = root.querySelector<HTMLElement>('[data-audit]')!;
+		const tol = root.querySelector<SVGPathElement>('[data-tol]')!;
+
+		const setNeedle = (v: number) => {
+			needle.style.transform = `rotate(${ang(v)}deg)`;
+			readout.textContent = fmt(v);
+		};
+		const setStatus = (s: string, text: string) => {
+			status.dataset.s = s;
+			status.textContent = text;
+		};
+
+		let timers: number[] = [];
+		const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
+
+		function reset() {
+			rows.forEach((r) => {
+				r.dataset.f = 'pending';
+				r.dataset.l = 'pending';
+				r.classList.remove('fail');
+			});
+			setNeedle(0);
+			tol.setAttribute('d', '');
+			setStatus('run', 'In progress');
+			audit.classList.add('off');
+		}
+
+		function play() {
+			timers.forEach(clearTimeout);
+			timers = [];
+			reset();
+			let t = 600;
+			rows.forEach((r) => {
+				const found = +r.dataset.found!;
+				const left = r.dataset.left ? +r.dataset.left : null;
+				const ok = r.dataset.ok === 'true';
+				at(t, () => {
+					tol.setAttribute('d', r.dataset.arc!);
+					setNeedle(found);
+				});
+				t += 1100;
+				at(t, () => {
+					r.dataset.f = 'shown';
+					if (!ok) {
+						r.classList.add('fail');
+						setStatus('adj', 'Adjusting');
+					} else if (left === null) {
+						r.dataset.l = 'na';
+					}
+				});
+				if (!ok && left !== null) {
+					t += 1300;
+					at(t, () => setNeedle(left));
+					t += 1100;
+					at(t, () => {
+						r.dataset.l = 'shown';
+						r.classList.remove('fail');
+						setStatus('run', 'In progress');
+					});
+				}
+				t += 400;
+			});
+			at(t + 200, () => {
+				tol.setAttribute('d', '');
+				setStatus('pass', 'Adjusted · Pass as left');
+			});
+			at(t + 700, () => audit.classList.remove('off'));
+		}
+
+		root.querySelector('[data-replay]')?.addEventListener('click', play);
+		if (root.dataset.queued === 'true') whenSeen(root, () => window.setTimeout(play, 300));
+	}
+
+	// Start only once the card is on screen in a visible tab — on phones it
+	// sits below the fold, and a background tab would otherwise finish unseen.
+	function whenSeen(el: HTMLElement, start: () => void) {
+		let inView = !('IntersectionObserver' in window);
+		let done = false;
+		const tryStart = () => {
+			if (done || !inView || document.visibilityState !== 'visible') return;
+			done = true;
+			io?.disconnect();
+			document.removeEventListener('visibilitychange', tryStart);
+			start();
+		};
+		const io =
+			'IntersectionObserver' in window
+				? new IntersectionObserver(
+						(entries) => {
+							inView = entries.some((e) => e.isIntersecting);
+							tryStart();
+						},
+						{ threshold: 0.4 },
+					)
+				: null;
+		io?.observe(el);
+		document.addEventListener('visibilitychange', tryStart);
+		tryStart();
+	}
+
+	document.querySelectorAll<HTMLElement>('[data-gauge]').forEach(init);
+</script>
+
+<style>
+	.gauge-record {
+		width: 100%;
+		max-width: 32rem;
+		container-type: inline-size;
+	}
+
+	.record {
+		background: var(--gray-999);
+		border: 1px solid var(--gray-800);
+		border-radius: 1.25rem;
+		/* Softer than --shadow-lg, with a short bottom falloff */
+		box-shadow:
+			0 10px 20px -14px rgba(9, 11, 17, 0.14),
+			0 2px 6px rgba(9, 11, 17, 0.05);
+		overflow: hidden;
+	}
+
+	/* The site's dark shadow tokens are white glows; here the border does the
+	   separating, with just a faint dark lift underneath */
+	:global(:root.theme-dark) .record {
+		box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.5);
+	}
+
+	.head {
+		display: flex;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		gap: 0.5rem 0.75rem;
+		padding: 1.125rem 1.25rem 0.875rem;
+		border-bottom: 1px solid var(--gray-800);
+	}
+
+	/* Not ".title": index.astro sizes every .title inside .hero as the H1 */
+	.rec-title {
+		font-family: var(--font-brand);
+		font-weight: 600;
+		font-size: var(--text-base);
+		line-height: 1.3;
+		color: var(--gray-0);
+		white-space: nowrap;
+	}
+
+	.meta,
+	.unc,
+	.audit,
+	table {
+		font-family: var(--font-mono);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.meta {
+		margin-top: 0.125rem;
+		font-size: 0.78rem;
+		color: var(--gray-400);
+	}
+
+	.status {
+		flex: none;
+		font-family: var(--font-brand);
+		font-weight: 600;
+		font-size: 0.72rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		padding: 0.3rem 0.65rem;
+		border-radius: 999px;
+		white-space: nowrap;
+		transition:
+			background-color 0.3s,
+			color 0.3s;
+	}
+	.status[data-s='run'] {
+		background: var(--status-run-bg);
+		color: var(--accent-regular);
+	}
+	.status[data-s='adj'] {
+		background: var(--status-warn-bg);
+		color: var(--status-warn);
+	}
+	.status[data-s='pass'] {
+		background: var(--status-ok-bg);
+		color: var(--status-ok);
+	}
+
+	/* Dial stacks above the table on narrow cards, sits beside it on wider ones */
+	.body {
+		display: grid;
+	}
+
+	.dial {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: 0.875rem 0.625rem 0.25rem;
+		border-bottom: 1px solid var(--gray-800);
+	}
+
+	@container (min-width: 26rem) {
+		.body {
+			grid-template-columns: 11rem minmax(0, 1fr);
+		}
+		.dial {
+			border-bottom: 0;
+			border-right: 1px solid var(--gray-800);
+		}
+	}
+
+	.dial svg {
+		display: block;
+		width: 100%;
+		max-width: 12.5rem;
+		height: auto;
+	}
+
+	.face {
+		fill: var(--gray-900);
+		stroke: var(--gray-800);
+	}
+	.arc {
+		fill: none;
+		stroke: var(--gray-400);
+		stroke-width: 1.5;
+	}
+	.tick {
+		stroke: var(--gray-400);
+	}
+	.tick.major {
+		stroke: var(--gray-0);
+		stroke-width: 1.6;
+	}
+	.lbl,
+	.readout {
+		font-family: var(--font-mono);
+		text-anchor: middle;
+	}
+	.lbl {
+		font-size: 9px;
+		fill: var(--gray-400);
+	}
+	.unit {
+		font-family: var(--font-brand);
+		font-size: 8px;
+		letter-spacing: 0.12em;
+		text-anchor: middle;
+		fill: var(--gray-400);
+	}
+	.readout {
+		font-size: 15px;
+		font-weight: 500;
+		fill: var(--gray-0);
+	}
+	.tol {
+		fill: none;
+		stroke: var(--status-ok);
+		stroke-width: 5;
+		opacity: 0.35;
+	}
+	.needle {
+		transform-box: view-box;
+		transform-origin: 100px 100px;
+		transition: transform 1s cubic-bezier(0.3, 1.35, 0.5, 1);
+	}
+	.needle line {
+		stroke: var(--status-bad);
+		stroke-width: 2.2;
+		stroke-linecap: round;
+	}
+	.hub {
+		fill: var(--gray-0);
+	}
+
+	.table-wrap {
+		min-width: 0;
+		overflow-x: auto;
+		padding: 0.5rem 0.875rem 0.75rem;
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.84rem;
+		color: var(--gray-0);
+	}
+
+	th {
+		font-family: var(--font-brand);
+		font-weight: 600;
+		font-size: 0.66rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--gray-400);
+		text-align: end;
+		padding: 0.5rem 0.375rem;
+		border-bottom: 1px solid var(--gray-800);
+	}
+
+	td {
+		text-align: end;
+		padding: 0.5rem 0.375rem;
+		border-bottom: 1px dashed var(--gray-800);
+		white-space: nowrap;
+		transition: background-color 0.3s;
+	}
+
+	th:first-child,
+	td:first-child {
+		text-align: start;
+	}
+
+	tr:last-child td {
+		border-bottom: 0;
+	}
+
+	tr.fail td {
+		background: var(--status-bad-bg);
+	}
+
+	.mark {
+		display: inline-block;
+		width: 1.1em;
+		text-align: center;
+		font-weight: 500;
+	}
+	.ok {
+		color: var(--status-ok);
+	}
+	.bad {
+		color: var(--status-bad);
+	}
+	.na {
+		color: var(--gray-400);
+	}
+	.pend {
+		color: var(--gray-800);
+	}
+
+	/* Cell visibility driven by the row's data-f / data-l state */
+	.pend,
+	.val,
+	.l .na {
+		display: none;
+	}
+	[data-f='pending'] .f .pend,
+	[data-f='shown'] .f .val,
+	[data-l='pending'] .l .pend,
+	[data-l='shown'] .l .val,
+	[data-l='na'] .l .na {
+		display: inline;
+	}
+
+	.unc {
+		padding: 0.375rem 0.375rem 0;
+		font-size: 0.75rem;
+		color: var(--gray-400);
+	}
+
+	.audit {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.75rem 1.25rem;
+		border-top: 1px solid var(--gray-800);
+		background: var(--gray-900);
+		font-size: 0.78rem;
+		color: var(--gray-200);
+		transition: opacity 0.5s;
+	}
+	.audit svg {
+		flex: none;
+		color: var(--status-ok);
+	}
+	.audit.off {
+		opacity: 0;
+	}
+
+	.under {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		gap: 0.75rem;
+		margin-top: 0.75rem;
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+	}
+
+	.actions {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.actions a {
+		color: var(--accent-regular);
+		font-weight: 700;
+		text-decoration: none;
+	}
+	.actions a:hover {
+		text-decoration: underline;
+	}
+
+	.replay {
+		font-family: var(--font-brand);
+		font-size: 0.8rem;
+		color: var(--gray-200);
+		background: var(--gray-999);
+		border: 1px solid var(--gray-800);
+		border-radius: 999px;
+		padding: 0.3rem 0.75rem;
+		cursor: pointer;
+	}
+	.replay:hover {
+		border-color: var(--accent-regular);
+	}
+	.replay:focus-visible,
+	.actions a:focus-visible {
+		outline: 2px solid var(--accent-regular);
+		outline-offset: 2px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.needle,
+		.status,
+		td,
+		.audit {
+			transition: none;
+		}
+	}
+</style>
