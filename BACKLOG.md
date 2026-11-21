@@ -38,6 +38,10 @@
 ### Invite friends from inside the app — to plan separately
 - Wanted 2026-11-21. Builds on the invite-only work above (needs the service role key server-side).
 
+### Hide the + button while scrolling (idea, 2026-11-21)
+- Hide on scroll down; bring back on scroll up, when scrolling stops, or at the bottom of the page. Calendar and Visits only (Map's "Add here" stays). Respect reduced motion.
+- Context: bottom nav slimmed 102px → 66px (`d87a372`); hiding the nav itself was rejected.
+
 ### Housekeeping
 - Migrations: the repo is now linked to the Supabase "Planner" project and new changes use CLI migrations. Still to do: rename `visits_people.sql` to the timestamped format (the CLI skips it), and capture the dashboard-created `planner_logs` table and policies in a baseline migration. The planned-per-day unique index from the handoff was never created.
 - Handoff QA: RLS isolation with two users, empty states, long addresses, mobile Safari.
