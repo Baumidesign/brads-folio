@@ -3,11 +3,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 import ContactCTA from "../components/ContactCTA.astro";
 import Hero from "../components/Hero.astro";
+import { graph, person } from "../lib/seo";
 ---
 
 <BaseLayout
   title="About | Bradley Baumann"
   description="About Bradley Baumann — building software for calibration and compliance-driven businesses"
+  jsonLd={graph({ "@type": "ProfilePage", mainEntity: { "@id": person["@id"] } }, person)}
 >
   <div class="stack gap-20">
     <main class="wrapper about">

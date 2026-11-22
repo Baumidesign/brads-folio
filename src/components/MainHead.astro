@@ -1,5 +1,12 @@
 ---
 import '../styles/global.css';
+// Self-hosted fonts (latin subset only), replacing the render-blocking
+// Google Fonts stylesheet.
+import '@fontsource/public-sans/latin-400.css';
+import '@fontsource/public-sans/latin-400-italic.css';
+import '@fontsource/public-sans/latin-700.css';
+import '@fontsource/rubik/latin-500.css';
+import '@fontsource/rubik/latin-600.css';
 
 interface Props {
 	title?: string | undefined;
@@ -8,6 +15,8 @@ interface Props {
 	image?: string | undefined;
 	// Keep the page out of search results (drafts)
 	noindex?: boolean | undefined;
+	// Structured data (schema.org), rendered as JSON-LD
+	jsonLd?: Record<string, unknown> | Record<string, unknown>[] | undefined;
 }
 
 const {
@@ -15,9 +24,14 @@ const {
 	description = 'The personal site of Bradley Baumann',
 	image = '/og-image.png',
 	noindex = false,
+	jsonLd,
 } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site);
+// Pages answer with and without a trailing slash (e.g. /about and /about/),
+// so always point the canonical at the slash version to avoid duplicates.
+const path = Astro.url.pathname;
+const canonicalPath = path.endsWith('/') || /\.[a-z0-9]+$/i.test(path) ? path : `${path}/`;
+const canonical = new URL(canonicalPath, Astro.site);
 const imageUrl = new URL(image, Astro.site);
 ---
 
@@ -62,12 +76,7 @@ const imageUrl = new URL(image, Astro.site);
 		/>
 	)
 }
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-	href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,700;1,400&family=Rubik:wght@500;600&display=swap"
-	rel="stylesheet"
-/>
+{jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />}
 <script is:inline>
 	// This code is inlined in the head to make dark mode instant & blocking.
 	const getThemePreference = () => {

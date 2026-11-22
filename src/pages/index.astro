@@ -6,6 +6,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 // Component Imports
 import CallToAction from '../components/CallToAction.astro';
+import { graph, person, website } from '../lib/seo';
 import GaugeRecord from '../components/GaugeRecord.astro';
 import Grid from '../components/Grid.astro';
 import Hero from '../components/Hero.astro';
@@ -29,6 +30,7 @@ const projects = (await getCollection('work', (e) => !e.data.draft))
 <BaseLayout
 	title="Bradley Baumann — Full-Stack Developer, Adelaide"
 	description="Full-stack developer based in Adelaide, South Australia, specialising in calibration and compliance management systems for regulated industries."
+	jsonLd={graph(person, website)}
 >
 	<div class="stack gap-20 lg:gap-48">
 		<div class="wrapper stack gap-8 lg:gap-20">

@@ -10,6 +10,7 @@ import Icon from '../../components/Icon.astro';
 import Pill from '../../components/Pill.astro';
 import CaseStudyStory from '../../components/CaseStudyStory.astro';
 import CaseStudyLongForm from '../../components/CaseStudyLongForm.astro';
+import { absUrl, graph, person } from '../../lib/seo';
 
 const contextNote: Record<'owned-product' | 'employer-experience', string> = {
 	'owned-product':
@@ -42,12 +43,27 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await entry.render();
+
+// Long-form case studies are articles; mark them up as such for search.
+const jsonLd = entry.data.longForm
+	? graph({
+			'@type': 'Article',
+			headline: entry.data.longForm.headline,
+			description: entry.data.description,
+			image: absUrl(entry.data.longForm.heroImg ?? entry.data.img),
+			datePublished: entry.data.publishDate.toISOString(),
+			author: { '@id': person['@id'] },
+			mainEntityOfPage: absUrl(`/work/${entry.slug}/`),
+			inLanguage: 'en-AU',
+		}, person)
+	: undefined;
 ---
 
 <BaseLayout
 	title={entry.data.seoTitle ?? entry.data.title}
 	description={entry.data.description}
 	noindex={entry.data.noindex || entry.data.draft}
+	jsonLd={jsonLd}
 >
 	<div class="stack gap-20">
 		{entry.data.longForm ? (

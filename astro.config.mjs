@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import netlify from '@astrojs/netlify';
 
 import react from '@astrojs/react';
+import sitemap from '@astrojs/sitemap';
 import { remarkPlaceholders } from './src/lib/placeholders.mjs';
 
 // `astro dev` — draft-copy markers ([TODO …], [VERIFY]) render as visible badges
@@ -15,7 +16,14 @@ export default defineConfig({
   output: 'server',
 
   adapter: netlify(),
-  integrations: [react()],
+  integrations: [
+    react(),
+    sitemap({
+      // Only the public portfolio; the planner app and auth pages stay out.
+      filter: (page) =>
+        !/^\/(planner|login|forgot-password|auth|SignOut|api)(\/|$)/i.test(new URL(page).pathname),
+    }),
+  ],
 
   // The original Calibration System case study was replaced by the
   // long-form Calibration Software page.
