@@ -17,6 +17,12 @@ export default defineConfig({
   adapter: netlify(),
   integrations: [react()],
 
+  // The original Calibration System case study was replaced by the
+  // long-form Calibration Software page.
+  redirects: {
+    '/work/case-study': '/work/calibration-software/',
+  },
+
   markdown: {
     remarkPlugins: [[remarkPlaceholders, { enabled: isDev }]],
   },

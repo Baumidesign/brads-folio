@@ -1,10 +1,4 @@
 ---
-# DRAFT — built in dev only, not listed anywhere, noindexed.
-# Go-live: remove `draft: true` (and `noindex`), delete case-study.md and
-# redirect /work/case-study → /work/calibration-software/.
-draft: true
-noindex: true
-
 title: Calibration Software
 seoTitle: Calibration Software Case Study | Bradley Baumann
 publishDate: 2026-11-22 00:00:00
@@ -109,7 +103,7 @@ In an accredited lab, data integrity and precise maths have to shape the system 
 ## Outcome
 
 - **Ready for go-live.** The system rolls out in December, the lab's quiet month.
-- [VERIFY] **Legacy data migrated.** Over 2,000 instrument records (1,491 pressure, 597 torque) moved out of text-based categories into a structured database.
+- **Legacy data migrated.** Over 2,900 instrument records (2,108 pressure, 806 torque, including archived equipment) and 394 past worksheets moved out of text-based categories into a structured database.
 - **No more hand calculations.** Results are calculated automatically, which removes manual calculation errors and saves technicians time.
 - **Certificates you can trust to finish.** On Power Platform, there was no sign of when a certificate was done, and each took 30 seconds to a minute. Now a visual cue confirms when it's ready, and an error code explains any failure. After a short warm-up on the first one, the rest generate quickly.
 - **No templates to choose.** Office staff used to pick the right certificate template by hand, and wrong picks were a constant source of errors. Certificates are now produced straight from the worksheet.
