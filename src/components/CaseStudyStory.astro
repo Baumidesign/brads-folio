@@ -355,7 +355,10 @@ const { data, story } = Astro.props;
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 
-		.highlight.wide {
+		.highlight.wide,
+		/* Odd number of cards: let the first span the row, so none is left
+		   on its own at the end. */
+		.highlight:first-child:nth-last-child(odd) {
 			grid-column: 1 / -1;
 		}
 	}

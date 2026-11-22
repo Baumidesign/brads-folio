@@ -66,11 +66,11 @@ story:
 
   highlightsHeading: What the rebuild made possible
   highlights:
-    - title: Every reading checked, not the average
-      visual: torque-chart
+    - title: Tolerances set per instrument type
       body: >-
-        Torque worksheets follow ISO 6789: each reading is checked against its
-        permitted error, so one bad reading can't hide in a good average.
+        Pressure gauges are judged against a percentage of full scale by face
+        size (AS 1349). Torque wrenches are judged against a percentage of
+        each target.
     - title: Categories as data, not text
       body: >-
         Around 20 text categories became proper types like Torque and
