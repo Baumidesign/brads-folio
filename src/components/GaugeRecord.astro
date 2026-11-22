@@ -300,12 +300,14 @@ const fmt = (n: number) => n.toFixed(1);
 		box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.5);
 	}
 
+	/* Badge always sits on its own line under the title. Beside the title,
+	   its changing width ("In progress" / "Adjusting" / "Adjusted · Pass as
+	   left") made the row wrap and unwrap mid-animation, shifting the page. */
 	.head {
 		display: flex;
-		justify-content: space-between;
-		flex-wrap: wrap;
+		flex-direction: column;
 		align-items: flex-start;
-		gap: 0.5rem 0.75rem;
+		gap: 0.5rem;
 		padding: 1.125rem 1.25rem 0.875rem;
 		border-bottom: 1px solid var(--gray-800);
 	}
@@ -454,8 +456,10 @@ const fmt = (n: number) => n.toFixed(1);
 		padding: 0.5rem 0.875rem 0.75rem;
 	}
 
+	/* Fixed columns, so widths don't change as readings fill in */
 	table {
 		width: 100%;
+		table-layout: fixed;
 		border-collapse: collapse;
 		font-size: 0.84rem;
 		color: var(--gray-0);
@@ -483,6 +487,7 @@ const fmt = (n: number) => n.toFixed(1);
 
 	th:first-child,
 	td:first-child {
+		width: 24%;
 		text-align: start;
 	}
 
