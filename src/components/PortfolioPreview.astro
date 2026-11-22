@@ -8,7 +8,7 @@ interface Props {
 const { data, slug } = Astro.props.project;
 ---
 
-<a class="card" href={`/work/${slug}`}>
+<a class="card" href={`/work/${slug}`} data-umami-event="project-card" data-umami-event-project={slug}>
 	<img src={data.img} alt={data.img_alt || ''} loading="lazy" decoding="async" />
 	<span class="caption">
 		<span class="text">

@@ -62,7 +62,7 @@ const iconLinks: { label: string; href: string; icon: keyof typeof iconPaths }[]
 			<div class="socials">
 				{
 					iconLinks.map(({ href, icon, label }) => (
-						<a href={href} class="social">
+						<a href={href} class="social" data-umami-event={label.toLowerCase()} data-umami-event-location="nav">
 							<span class="sr-only">{label}</span>
 							<Icon icon={icon} />
 						</a>
@@ -98,7 +98,7 @@ const iconLinks: { label: string; href: string; icon: keyof typeof iconPaths }[]
 			<div class="socials">
 				{
 					iconLinks.map(({ href, icon, label }) => (
-						<a href={href} class="social">
+						<a href={href} class="social" data-umami-event={label.toLowerCase()} data-umami-event-location="nav">
 							<span class="sr-only">{label}</span>
 							<Icon icon={icon} />
 						</a>

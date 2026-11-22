@@ -48,6 +48,20 @@ const imageUrl = new URL(image, Astro.site);
 <link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+{
+	// Umami analytics (cookieless). Production builds only; data-domains stops
+	// Netlify deploy previews from being counted. Planner/auth pages use their
+	// own <head>, so they are not tracked.
+	import.meta.env.PROD && (
+		<script
+			is:inline
+			defer
+			src="https://cloud.umami.is/script.js"
+			data-website-id="e72283e5-9b70-4739-884d-7517a9be786f"
+			data-domains="bradbaumi.com.au"
+		/>
+	)
+}
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link

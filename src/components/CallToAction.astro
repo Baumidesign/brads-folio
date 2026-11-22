@@ -1,12 +1,13 @@
 ---
 interface Props {
 	href: string;
+	[attr: `data-${string}`]: string | undefined;
 }
 
-const { href } = Astro.props;
+const { href, ...attrs } = Astro.props;
 ---
 
-<a href={href}><slot /></a>
+<a href={href} {...attrs}><slot /></a>
 
 <style>
 	a {

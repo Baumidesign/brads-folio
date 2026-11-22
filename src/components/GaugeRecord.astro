@@ -136,8 +136,8 @@ const fmt = (n: number) => n.toFixed(1);
 	<div class="under">
 		<span>Example record · illustrative data</span>
 		<span class="actions">
-			<button type="button" class="replay" data-replay>↻ Replay</button>
-			{href && <a href={href}>See the case study →</a>}
+			<button type="button" class="replay" data-replay data-umami-event="gauge-replay">↻ Replay</button>
+			{href && <a href={href} data-umami-event="gauge-case-study">See the case study →</a>}
 		</span>
 	</div>
 </div>
