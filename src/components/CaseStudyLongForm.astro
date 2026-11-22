@@ -3,6 +3,7 @@
 // body as the article, then a closing CTA. Driven by the `longForm`
 // frontmatter field (see src/content/config.ts).
 import type { CollectionEntry } from 'astro:content';
+import { existsSync } from 'node:fs';
 import CallToAction from './CallToAction.astro';
 import Icon from './Icon.astro';
 import { highlightPlaceholders } from '../lib/placeholders.mjs';
@@ -23,6 +24,13 @@ const facts = [
 	longForm.timeline && { label: 'Timeline', value: longForm.timeline },
 	data.techStack?.length && { label: 'Built with', value: data.techStack.join(', ') },
 ].filter(Boolean) as { label: string; value: string }[];
+
+// The hero is the page's largest element, so it loads first. If a 960px-wide
+// copy sits next to it (e.g. eras-960.webp), phones get that one instead.
+const hero = longForm.heroImg;
+const heroSmall = hero?.replace(/\.webp$/, '-960.webp');
+const heroSrcset =
+	hero && heroSmall !== hero && existsSync(`public${heroSmall}`) ? `${heroSmall} 960w, ${hero} 1920w` : undefined;
 ---
 
 <article class="long-form">
@@ -42,7 +50,17 @@ const facts = [
 		)}
 	</header>
 
-	{longForm.heroImg && <img class="hero-img" src={longForm.heroImg} alt={longForm.heroImg_alt ?? ''} />}
+	{hero && (
+		<img
+			class="hero-img"
+			src={hero}
+			srcset={heroSrcset}
+			sizes={heroSrcset ? '(max-width: 46rem) 100vw, 46rem' : undefined}
+			alt={longForm.heroImg_alt ?? ''}
+			fetchpriority="high"
+			decoding="async"
+		/>
+	)}
 
 	<div class="prose">
 		<slot />

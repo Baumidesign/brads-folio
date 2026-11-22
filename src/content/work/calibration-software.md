@@ -75,7 +75,7 @@ Designed for technicians working hands-on with a tablet:
 - As-found readings first, with after-adjustment readings recorded separately when an instrument is adjusted.
 
 <div class="shot-pair">
-  <img src="/assets/calibration-software/worksheet.webp" alt="A torque wrench worksheet awaiting review. Three settings, each with its target, tolerance, five readings, aggregate, variance and a pass result." />
+  <img src="/assets/calibration-software/worksheet.webp" alt="A torque wrench worksheet awaiting review. Three settings, each with its target, tolerance, five readings, aggregate, variance and a pass result." loading="lazy" />
   <img src="/assets/calibration-software/worksheet-mobile.webp" alt="A pressure gauge worksheet on a phone: each test point is its own card, with large inputs for the applied pressure and the rising and falling master readings." loading="lazy" />
 </div>
 

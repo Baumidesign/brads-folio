@@ -4,6 +4,7 @@ import netlify from '@astrojs/netlify';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import { remarkPlaceholders } from './src/lib/placeholders.mjs';
+import { rehypeLazyImages } from './src/lib/lazyImages.mjs';
 
 // `astro dev` — draft-copy markers ([TODO …], [VERIFY]) render as visible badges
 const isDev = process.argv.includes('dev');
@@ -33,5 +34,6 @@ export default defineConfig({
 
   markdown: {
     remarkPlugins: [[remarkPlaceholders, { enabled: isDev }]],
+    rehypePlugins: [rehypeLazyImages],
   },
 });
