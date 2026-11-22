@@ -99,8 +99,8 @@ export const collections = {
 							z.object({
 								title: z.string(),
 								body: z.string(),
-								// A built-in illustration instead of an image.
-								visual: z.enum(['torque-chart']).optional(),
+								// Span the full row of the highlights grid.
+								wide: z.boolean().optional(),
 								img: z.string().optional(),
 								img_alt: z.string().optional(),
 							})

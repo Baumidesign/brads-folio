@@ -108,3 +108,14 @@ In an accredited lab, data integrity and precise maths have to shape the system 
 - **Certificates you can trust to finish.** On Power Platform, there was no sign of when a certificate was done, and each took 30 seconds to a minute. Now a visual cue confirms when it's ready, and an error code explains any failure. After a short warm-up on the first one, the rest generate quickly.
 - **No templates to choose.** Office staff used to pick the right certificate template by hand, and wrong picks were a constant source of errors. Certificates are now produced straight from the worksheet.
 - **Positive usability testing.** Office staff say it's quicker and cleaner to use, and saves them time because records, worksheets and certificates are no longer spread across folders and applications. In a usability test, admin staff said bulk worksheet creation, instead of creating worksheets one by one, will save them a lot of time.
+
+## What's next
+
+- **QR lookup at the bench.** Designed, and waiting on usability testing before it's built.
+- **Temperature calibration.** Partly built, and waiting on usability testing before work continues.
+- **Equipment check-in.** A lab check-in screen to replace the shared Google Sheet that tracks incoming equipment. It's designed and up for discussion before building starts.
+
+<figure>
+  <img src="/assets/calibration-software/check-in-design.webp" alt="Design for the lab check-in screen: one row per item received, with customer, item, ID and serial, category, a colour-coded priority, a Take it button to assign a technician, work order number, notes, and checkboxes for certificate and invoice." loading="lazy" />
+  <figcaption>Design for the lab check-in screen. Not built yet.</figcaption>
+</figure>

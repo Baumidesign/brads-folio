@@ -3,7 +3,6 @@
 // highlight cards and a "What's next" list. Driven by the `story`
 // frontmatter field (see src/content/config.ts).
 import type { CollectionEntry } from 'astro:content';
-import TorqueChart from './TorqueChart.astro';
 
 interface Props {
 	data: CollectionEntry<'work'>['data'];
@@ -76,10 +75,9 @@ const { data, story } = Astro.props;
 			</div>
 			<div class="highlights">
 				{story.highlights.map((h) => (
-					<article class:list={['highlight', { wide: h.visual }]}>
+					<article class:list={['highlight', { wide: h.wide }]}>
 						<h3>{h.title}</h3>
 						<p>{h.body}</p>
-						{h.visual === 'torque-chart' && <TorqueChart />}
 						{h.img && <img src={h.img} alt={h.img_alt ?? ''} loading="lazy" />}
 					</article>
 				))}

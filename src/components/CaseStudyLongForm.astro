@@ -176,6 +176,17 @@ const facts = [
 		border: 1px solid var(--gray-800);
 	}
 
+	.prose :global(figure) {
+		margin: 1.5rem 0 0;
+	}
+
+	.prose :global(figcaption) {
+		margin-top: 0.6rem;
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+		text-align: center;
+	}
+
 	/* Desktop + phone screenshot side by side. Column widths follow each
 	   image's aspect ratio (1674×850 and 1179×1616) so their heights match. */
 	.prose :global(.shot-pair) {
