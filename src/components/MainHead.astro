@@ -6,12 +6,15 @@ interface Props {
 	description?: string | undefined;
 	// Social preview image (path under /public); defaults to the site-wide card
 	image?: string | undefined;
+	// Keep the page out of search results (drafts)
+	noindex?: boolean | undefined;
 }
 
 const {
 	title = 'Bradley Baumann: Personal Site',
 	description = 'The personal site of Bradley Baumann',
 	image = '/og-image.png',
+	noindex = false,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -21,6 +24,7 @@ const imageUrl = new URL(image, Astro.site);
 <meta charset="UTF-8" />
 <meta name="description" content={description} />
 <meta name="viewport" content="width=device-width" />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
 <link rel="canonical" href={canonical} />
 
 <meta property="og:type" content="website" />

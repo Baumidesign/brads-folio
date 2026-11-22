@@ -36,6 +36,39 @@ export const collections = {
 			// always showing the 4 most recent by publishDate.
 			featured: z.boolean().optional(),
 
+			// Draft entries are only built in dev (reachable by URL), never
+			// listed on the homepage or Work page, and always noindexed.
+			draft: z.boolean().optional(),
+			noindex: z.boolean().optional(),
+
+			// Optional <title> override; falls back to `title`.
+			seoTitle: z.string().optional(),
+
+			// Long-form layout (rendered by CaseStudyLongForm.astro): an intro
+			// header with quick facts, then the Markdown body as the article,
+			// then a closing CTA. `title` stays the short card name; `headline`
+			// is the page's H1. Uses `role` and `techStack` ("Built with").
+			longForm: z
+				.object({
+					eyebrow: z.string().optional(),
+					headline: z.string(),
+					// Intro paragraph under the H1; falls back to `description`
+					// (which stays the meta description either way).
+					lede: z.string().optional(),
+					timeline: z.string().optional(),
+					heroImg: z.string().optional(),
+					heroImg_alt: z.string().optional(),
+					cta: z
+						.object({
+							lead: z.string(),
+							body: z.string(),
+							label: z.string(),
+							href: z.string().default('mailto:hi@bradbaumi.com.au'),
+						})
+						.optional(),
+				})
+				.optional(),
+
 			// Optional structured layout (rendered by CaseStudyStory.astro)
 			// in place of a plain markdown body: quick facts, a timeline of
 			// phases, highlight cards and a "What's next" list. Images are
