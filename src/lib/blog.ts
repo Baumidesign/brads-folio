@@ -1,8 +1,13 @@
 import { getCollection } from 'astro:content';
 
-/** Published posts, newest first. Drafts are included in dev only. */
+// Drafts are built in dev, or in a preview build run with SHOW_DRAFTS=true
+// (e.g. `SHOW_DRAFTS=true netlify deploy --build --alias blog-preview`) so a
+// draft can be read on a phone before it's published. Never set on Netlify.
+const showDrafts = import.meta.env.DEV || import.meta.env.SHOW_DRAFTS === 'true';
+
+/** Published posts, newest first (plus drafts in dev and preview builds). */
 export async function getPosts() {
-	const posts = await getCollection('blog', (e) => import.meta.env.DEV || !e.data.draft);
+	const posts = await getCollection('blog', (e) => showDrafts || !e.data.draft);
 	return posts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
 }
 
