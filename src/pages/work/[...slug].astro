@@ -1,5 +1,5 @@
 ---
-import { type CollectionEntry, getCollection } from 'astro:content';
+import { type CollectionEntry, getCollection, render } from 'astro:content';
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
@@ -36,13 +36,13 @@ export async function getStaticPaths() {
 	// Drafts are only built in dev, where they're reachable by URL alone.
 	const work = await getCollection('work', (e) => import.meta.env.DEV || !e.data.draft);
 	return work.map((entry) => ({
-		params: { slug: entry.slug },
+		params: { slug: entry.id },
 		props: { entry },
 	}));
 }
 
 const { entry } = Astro.props;
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 
 // Long-form case studies are articles; mark them up as such for search.
 const jsonLd = entry.data.longForm
@@ -53,7 +53,7 @@ const jsonLd = entry.data.longForm
 			image: absUrl(entry.data.longForm.heroImg ?? entry.data.img),
 			datePublished: entry.data.publishDate.toISOString(),
 			author: { '@id': person['@id'] },
-			mainEntityOfPage: absUrl(`/work/${entry.slug}/`),
+			mainEntityOfPage: absUrl(`/work/${entry.id}/`),
 			inLanguage: 'en-AU',
 		}, person)
 	: undefined;

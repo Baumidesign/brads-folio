@@ -1,8 +1,12 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { glob } from 'astro/loaders';
+import { z } from 'astro/zod';
 
 export const collections = {
 	work: defineCollection({
-		type: 'content',
+		// Case studies are Markdown files under src/content/work; an entry's id is
+		// its path without the extension (e.g. nested/atlanticletting).
+		loader: glob({ pattern: '**/*.md', base: './src/content/work' }),
 		schema: z.object({
 			title: z.string(),
 			description: z.string(),
@@ -30,7 +34,7 @@ export const collections = {
 
 			// Structured live-site link, rendered as a "Visit live site" CTA
 			// instead of a hand-written <a> buried in the markdown body.
-			externalUrl: z.string().url().optional(),
+			externalUrl: z.url().optional(),
 
 			// Lets the homepage curate specific case studies later instead of
 			// always showing the 4 most recent by publishDate.
