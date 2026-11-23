@@ -33,6 +33,15 @@ export default defineConfig({
     '/work/case-study': '/work/calibration-software/',
   },
 
+  // Vite 8 targets "baseline widely available" browsers by default, which
+  // rewrites media queries to range syntax (width>=50em) that Safari only
+  // supports from 16.4. Keep the CSS output readable by older iPhones too.
+  vite: {
+    build: {
+      cssTarget: ['chrome107', 'edge107', 'firefox104', 'safari15'],
+    },
+  },
+
   // Astro 7 changed the default to 'jsx', which drops whitespace between
   // inline elements; keep the v6 behaviour so no spaces go missing in copy.
   compressHTML: true,
