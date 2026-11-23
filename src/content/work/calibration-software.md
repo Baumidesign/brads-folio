@@ -103,7 +103,7 @@ In an accredited lab, data integrity and precise maths have to shape the system 
 ## Outcome
 
 - **Ready for go-live.** The system rolls out in December, the lab's quiet month.
-- **Legacy data migrated.** Over 1,600 customer accounts, more than 10,000 equipment records (including 2,108 pressure and 806 torque instruments, with archived equipment) and 394 past worksheets moved out of text-based categories into a structured database.
+- **Legacy data migrated.** Over 1,600 customer accounts, more than 10,000 equipment records (including 2,108 pressure and 806 torque instruments, with archived equipment) and 394 past worksheets moved out of text-based categories into a structured database. [Read how the migration was planned →](/blog/moving-off-access/)
 - **No more hand calculations.** Results are calculated automatically, which removes manual calculation errors and saves technicians time.
 - **Certificates you can trust to finish.** On Power Platform, there was no sign of when a certificate was done, and each took 30 seconds to a minute. Now a visual cue confirms when it's ready, and an error code explains any failure. After a short warm-up on the first one, the rest generate quickly.
 - **No templates to choose.** Office staff used to pick the right certificate template by hand, and wrong picks were a constant source of errors. Certificates are now produced straight from the worksheet.
