@@ -12,14 +12,16 @@ interface Props {
 	description?: string | undefined;
 	noindex?: boolean | undefined;
 	jsonLd?: Record<string, unknown> | Record<string, unknown>[] | undefined;
+	// RSS feed to advertise in <head> (blog pages)
+	rss?: string | undefined;
 }
 
-const { title, description, noindex, jsonLd } = Astro.props;
+const { title, description, noindex, jsonLd, rss } = Astro.props;
 ---
 
 <html lang="en-AU">
 	<head>
-		<MainHead title={title} description={description} noindex={noindex} jsonLd={jsonLd} />
+		<MainHead title={title} description={description} noindex={noindex} jsonLd={jsonLd} rss={rss} />
 	</head>
 	<body>
 		<div class="stack backgrounds">

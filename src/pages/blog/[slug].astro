@@ -1,0 +1,85 @@
+---
+// One page per blog post, using the shared Article layout. Drafts are only
+// built in dev (reachable by URL, marked "Draft", noindexed).
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Article from '../../components/Article.astro';
+import Icon from '../../components/Icon.astro';
+import { blogCta, formatDate, getPosts } from '../../lib/blog';
+import { absUrl, graph, person } from '../../lib/seo';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+	const posts = await getPosts();
+	return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { data } = post;
+const { Content } = await render(post);
+
+const published = formatDate(data.publishDate);
+const eyebrow = [data.draft && 'Draft', published].filter(Boolean).join(' · ');
+const facts = data.updatedDate ? [{ label: 'Updated', value: formatDate(data.updatedDate) }] : [];
+
+const jsonLd = graph(
+	{
+		'@type': 'BlogPosting',
+		headline: data.title,
+		description: data.description,
+		...(data.heroImg && { image: absUrl(data.heroImg) }),
+		datePublished: data.publishDate.toISOString(),
+		...(data.updatedDate && { dateModified: data.updatedDate.toISOString() }),
+		author: { '@id': person['@id'] },
+		mainEntityOfPage: absUrl(`/blog/${post.id}/`),
+		inLanguage: 'en-AU',
+	},
+	person
+);
+---
+
+<BaseLayout
+	title={data.seoTitle ?? `${data.title} | Bradley Baumann`}
+	description={data.description}
+	noindex={data.draft}
+	jsonLd={jsonLd}
+	rss="/blog/rss.xml"
+>
+	<div class="wrapper">
+		<a class="back-link" href="/blog/"><Icon icon="arrow-left" /> Blog</a>
+		<Article
+			eyebrow={eyebrow}
+			headline={data.title}
+			lede={data.description}
+			facts={facts}
+			heroImg={data.heroImg}
+			heroImgAlt={data.heroImg_alt}
+			cta={blogCta}
+			ctaEvent="blog-cta"
+		>
+			<Content />
+		</Article>
+	</div>
+</BaseLayout>
+
+<style>
+	.back-link {
+		display: none;
+		text-decoration: 1px solid underline transparent;
+		text-underline-offset: 0.25em;
+		transition: text-decoration-color var(--theme-transition);
+	}
+
+	.back-link:hover,
+	.back-link:focus {
+		text-decoration-color: currentColor;
+	}
+
+	@media (min-width: 50em) {
+		.back-link {
+			display: block;
+			margin-bottom: 2rem;
+		}
+	}
+</style>

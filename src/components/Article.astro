@@ -1,0 +1,312 @@
+---
+// Long-form article layout shared by case studies and blog posts: intro
+// header (eyebrow, H1, lede, optional quick facts), optional hero image, the
+// Markdown body, then an optional closing CTA.
+import { existsSync } from 'node:fs';
+import CallToAction from './CallToAction.astro';
+import Icon from './Icon.astro';
+import { escape, highlightPlaceholders } from '../lib/placeholders.mjs';
+
+export interface ArticleCta {
+	lead: string;
+	body: string;
+	label: string;
+	href: string;
+}
+
+interface Props {
+	eyebrow: string;
+	headline: string;
+	lede: string;
+	facts?: { label: string; value: string }[];
+	heroImg?: string | undefined;
+	heroImgAlt?: string | undefined;
+	cta?: ArticleCta | undefined;
+	// Umami event name for the CTA click
+	ctaEvent?: string;
+}
+
+const { eyebrow, headline, lede, facts = [], heroImg: hero, heroImgAlt, cta, ctaEvent } = Astro.props;
+
+// Frontmatter values bypass the remark plugin, so highlight markers here
+// (dev only). Always HTML-escaped, since these are rendered with set:html.
+const dev = import.meta.env.DEV;
+const fact = (s: string) => (dev ? highlightPlaceholders(s) : escape(s));
+
+// The hero is the page's largest element, so it loads first. If a 960px-wide
+// copy sits next to it (e.g. eras-960.webp), phones get that one instead.
+const heroSmall = hero?.replace(/\.webp$/, '-960.webp');
+const heroSrcset =
+	hero && heroSmall !== hero && existsSync(`public${heroSmall}`) ? `${heroSmall} 960w, ${hero} 1920w` : undefined;
+---
+
+<article class="long-form">
+	<header class="intro">
+		<p class="eyebrow">{eyebrow}</p>
+		<h1>{headline}</h1>
+		<p class="lede" set:html={fact(lede)} />
+		{facts.length > 0 && (
+			<dl class="facts">
+				{facts.map((f) => (
+					<div>
+						<dt>{f.label}</dt>
+						<dd set:html={fact(f.value)} />
+					</div>
+				))}
+			</dl>
+		)}
+	</header>
+
+	{hero && (
+		<img
+			class="hero-img"
+			src={hero}
+			srcset={heroSrcset}
+			sizes={heroSrcset ? '(max-width: 46rem) 100vw, 46rem' : undefined}
+			alt={heroImgAlt ?? ''}
+			fetchpriority="high"
+			decoding="async"
+		/>
+	)}
+
+	<div class="prose">
+		<slot />
+	</div>
+
+	{cta && (
+		<aside class="closing">
+			<p>
+				<strong>{cta.lead}</strong> {cta.body}
+			</p>
+			<CallToAction href={cta.href} data-umami-event={ctaEvent}>
+				{cta.label}
+				<Icon icon="paper-plane-tilt" size="1.2em" />
+			</CallToAction>
+		</aside>
+	)}
+</article>
+
+<style>
+	.long-form {
+		max-width: 46rem;
+		margin-inline: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+	}
+
+	.intro {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.eyebrow {
+		margin: 0;
+		font-size: var(--text-sm);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		font-weight: 600;
+		color: var(--accent-regular);
+	}
+
+	h1 {
+		margin: 0;
+		font-size: var(--text-3xl);
+		line-height: 1.05;
+		color: var(--gray-0);
+	}
+
+	.lede {
+		margin: 0;
+		font-size: var(--text-lg);
+		line-height: 1.5;
+		color: var(--gray-300);
+	}
+
+	.facts {
+		display: grid;
+		gap: 0.75rem;
+		margin: 0.5rem 0 0;
+		padding-top: 1.25rem;
+		border-top: 1px solid var(--gray-800);
+	}
+
+	.facts dt {
+		font-size: 0.75rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		font-weight: 600;
+		color: var(--gray-400);
+	}
+
+	.facts dd {
+		margin: 0.15rem 0 0;
+		font-size: var(--text-sm);
+		line-height: 1.45;
+		color: var(--gray-200);
+	}
+
+	.hero-img {
+		width: 100%;
+		border-radius: 1.25rem;
+		border: 1px solid var(--gray-800);
+	}
+
+	/* Article body (rendered from Markdown) */
+	.prose {
+		color: var(--gray-200);
+		line-height: 1.6;
+	}
+
+	.prose > :global(* + *) {
+		margin-top: 1rem;
+	}
+
+	.prose :global(h2) {
+		margin-top: 3rem;
+		font-size: var(--text-xl);
+		line-height: 1.2;
+		color: var(--gray-0);
+	}
+
+	.prose :global(h2:first-child) {
+		margin-top: 0;
+	}
+
+	.prose :global(h3) {
+		margin-top: 2rem;
+		font-size: var(--text-lg);
+		color: var(--gray-0);
+	}
+
+	.prose :global(strong) {
+		color: var(--gray-0);
+	}
+
+	.prose :global(ul) {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		padding-inline-start: 1.25rem;
+	}
+
+	.prose :global(li::marker) {
+		color: var(--accent-regular);
+	}
+
+	.prose :global(img) {
+		width: 100%;
+		border-radius: 1rem;
+		border: 1px solid var(--gray-800);
+	}
+
+	.prose :global(figure) {
+		margin: 1.5rem 0 0;
+	}
+
+	.prose :global(figcaption) {
+		margin-top: 0.6rem;
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+		text-align: center;
+	}
+
+	/* Desktop + phone screenshot side by side. Column widths follow each
+	   image's aspect ratio (1674×850 and 1179×1616) so their heights match. */
+	.prose :global(.shot-pair) {
+		display: grid;
+		grid-template-columns: 1.969fr 0.73fr;
+		gap: 0.75rem;
+		align-items: start;
+	}
+
+	@media (max-width: 40em) {
+		.prose :global(.shot-pair) {
+			grid-template-columns: 1fr;
+			justify-items: center;
+		}
+
+		.prose :global(.shot-pair img + img) {
+			width: 70%;
+		}
+	}
+
+	/* Screenshot slots until real images are supplied */
+	.prose :global(.shot-placeholder) {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		aspect-ratio: 16 / 10;
+		padding: 1.5rem;
+		border: 2px dashed var(--gray-700);
+		border-radius: 1rem;
+		background: var(--gray-999_40);
+		color: var(--gray-400);
+		font-size: var(--text-sm);
+		text-align: center;
+	}
+
+	.prose :global(.shot-placeholder strong) {
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--gray-300);
+	}
+
+	/* Draft-copy markers (dev only, see src/lib/placeholders.mjs) */
+	.long-form :global(mark.draft-todo),
+	.long-form :global(mark.draft-verify) {
+		padding: 0.05em 0.4em;
+		border-radius: 0.35em;
+		font-size: 0.9em;
+		font-weight: 600;
+	}
+
+	.long-form :global(mark.draft-todo) {
+		background: #fff1a8;
+		color: #5a4300;
+	}
+
+	.long-form :global(mark.draft-verify) {
+		background: #ffd5c2;
+		color: #7a2400;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+	}
+
+	.closing {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1.5rem;
+		margin-top: 2rem;
+		padding: 2rem 1.5rem;
+		border: 1px solid var(--gray-800);
+		border-radius: 1.25rem;
+		background: var(--gray-999_40);
+		box-shadow: var(--shadow-sm);
+		font-size: var(--text-lg);
+		color: var(--gray-300);
+	}
+
+	.closing strong {
+		color: var(--gray-0);
+	}
+
+	@media (min-width: 50em) {
+		h1 {
+			font-size: var(--text-4xl);
+		}
+
+		.facts {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 2.5rem;
+		}
+
+		.closing {
+			padding: 2.5rem;
+		}
+	}
+</style>

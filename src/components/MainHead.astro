@@ -17,6 +17,8 @@ interface Props {
 	noindex?: boolean | undefined;
 	// Structured data (schema.org), rendered as JSON-LD
 	jsonLd?: Record<string, unknown> | Record<string, unknown>[] | undefined;
+	// RSS feed path to advertise (blog pages)
+	rss?: string | undefined;
 }
 
 const {
@@ -25,6 +27,7 @@ const {
 	image = '/og-image.png',
 	noindex = false,
 	jsonLd,
+	rss,
 } = Astro.props;
 
 // Pages answer with and without a trailing slash (e.g. /about and /about/),
@@ -40,6 +43,7 @@ const imageUrl = new URL(image, Astro.site);
 <meta name="viewport" content="width=device-width" />
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 <link rel="canonical" href={canonical} />
+{rss && <link rel="alternate" type="application/rss+xml" title="Bradley Baumann: Blog" href={new URL(rss, Astro.site)} />}
 
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Bradley Baumann" />

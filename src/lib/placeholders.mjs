@@ -9,7 +9,7 @@ const VERIFY = /\[VERIFY(?::\s*([^\]]+))?\]/g;
 const TODO = /\[([A-Z][A-Z-]+\b[^\]]*)\]/g;
 const ANY = /\[VERIFY(?::\s*[^\]]+)?\]|\[[A-Z][A-Z-]+\b[^\]]*\]/g;
 
-const escape = (s) =>
+export const escape = (s) =>
 	s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 function markerToHtml(marker) {

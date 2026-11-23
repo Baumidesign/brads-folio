@@ -115,4 +115,24 @@ export const collections = {
 				.optional(),
 		}),
 	}),
+
+	blog: defineCollection({
+		// Posts are Markdown files under src/content/blog; the file name is the URL
+		// (e.g. moving-off-access.md → /blog/moving-off-access/).
+		loader: glob({ pattern: '**/*.md', base: './src/content/blog' }),
+		schema: z.object({
+			title: z.string(),
+			// Meta description, listing summary and the lede under the H1
+			description: z.string(),
+			publishDate: z.coerce.date(),
+			// Set when a published post is meaningfully revised
+			updatedDate: z.coerce.date().optional(),
+			// Drafts are only built in dev and never listed, linked or indexed
+			draft: z.boolean().optional(),
+			// Optional <title> override; falls back to `title`
+			seoTitle: z.string().optional(),
+			heroImg: z.string().optional(),
+			heroImg_alt: z.string().optional(),
+		}),
+	}),
 };
