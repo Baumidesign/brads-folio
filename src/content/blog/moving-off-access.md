@@ -1,8 +1,7 @@
 ---
 title: Moving calibration records off an Access database
 description: "Lessons from moving a calibration lab's records off a decade-old Access database: messy data, hidden rules and checking nothing went missing."
-publishDate: 2026-12-01
-draft: true
+publishDate: 2026-11-23
 ---
 
 If your calibration lab still runs on an Access database, a spreadsheet or a system someone built years ago, you're not alone. Moving off it feels risky, because those records are the lab's history. This is what I learned moving one NATA-accredited lab's records into a new system, and what I'd tell you to plan for.
@@ -45,19 +44,25 @@ New certificates now live in the app, stored against each instrument, instead of
 
 I built the migration so it could do a dry run first, reporting record counts and any mapping errors before anything was saved. After the real import, I spot-checked customers and instruments by hand and cross-checked the totals in Excel. The old system stayed available alongside the new one while I checked.
 
-### Involve the people who'll use it
+### Plan for the people who'll use it
 
-Office staff tried the new system in a usability test before go-live. Their feedback was clear: bulk worksheet creation, instead of creating worksheets one by one, will save them a lot of time.
+A new system only pays off if the people using it every day feel the difference. Think about what changes for each of them:
 
-## What I learned moving over 2,900 instrument records
+- **Technicians** no longer do calculations by hand or search through a stack of paper worksheets to find the item in front of them. Deviation and pass/fail are worked out as they enter each reading.
+- **Office staff** no longer re-key readings or pick a certificate template. In a usability test before go-live, they said bulk worksheet creation, instead of creating worksheets one by one, will save them a lot of time.
+- **The biggest win:** certificates are generated automatically and stored alongside the equipment, so an instrument's full history is in one place.
 
-In the end, the migration moved over 2,900 instrument records (2,108 pressure and 806 torque, including archived equipment) and 394 past worksheets out of text-based categories into a structured database. A few things stood out.
+## What I learned moving over 10,000 equipment records
+
+In the end, the migration moved over 1,600 customer accounts and more than 10,000 equipment records, including 2,108 pressure and 806 torque instruments (archived equipment included), plus 394 past worksheets, out of text-based categories into a structured database. A few things stood out.
 
 **A lot of the logic lived in people's heads.** Which reference equipment suits which range, or the tolerance rules for each instrument type, weren't in the old database. They lived with the technicians and on paper, and had to be written down before they could be built into the system.
 
 **The specs were messier than they looked.** Free text looks fine in a list. It's only when you try to turn it into structured data that you see how many ways people have written the same thing.
 
-**Was Power Platform the right first step?** I'm honestly not sure. Building quickly let me put worksheets in front of the lab early and learn a lot about real-world calibration, things I could never have worked out on my own. We got real value from the Model-Driven App, and we could have stayed on it, but it would have cost more over time. Moving off it meant a difficult conversation with stakeholders. It was a necessary one, and I didn't shy away from it once I'd built a working prototype in my own time to show them.
+**Was Power Platform the right first step?** I'm honestly not sure, or maybe I'm just too stubborn to call it a mistake. Building quickly let me put worksheets in front of the lab early and learn a lot about real-world calibration, things I could never have worked out on my own. We got real value from the Model-Driven App, and we could have stayed on it, but it would have cost more over time. Moving off it meant a difficult conversation with stakeholders. It was a necessary one, and I didn't shy away from it once I'd built a working prototype in my own time to show them.
+
+**Going custom had its own price.** The learning curve was steep at first: sign-in, user permissions and security were things the Model-Driven App handled out of the box, and I had to set them up myself. But the benefits are worth it. Every user gets their own account without paying Microsoft for another licence, and the screens can work exactly the way the lab does.
 
 **Don't assume the data is clean.** Plan time to fix it before you move it.
 
