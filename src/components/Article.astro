@@ -21,12 +21,14 @@ interface Props {
 	facts?: { label: string; value: string }[];
 	heroImg?: string | undefined;
 	heroImgAlt?: string | undefined;
+	// Optional "At a glance" summary rows, shown between the hero and the body
+	glance?: { label: string; value: string }[] | undefined;
 	cta?: ArticleCta | undefined;
 	// Umami event name for the CTA click
 	ctaEvent?: string;
 }
 
-const { eyebrow, headline, lede, facts = [], heroImg: hero, heroImgAlt, cta, ctaEvent } = Astro.props;
+const { eyebrow, headline, lede, facts = [], heroImg: hero, heroImgAlt, glance = [], cta, ctaEvent } = Astro.props;
 
 // Frontmatter values bypass the remark plugin, so highlight markers here
 // (dev only). Always HTML-escaped, since these are rendered with set:html.
@@ -67,6 +69,20 @@ const heroSrcset =
 			fetchpriority="high"
 			decoding="async"
 		/>
+	)}
+
+	{glance.length > 0 && (
+		<section class="glance" aria-labelledby="glance-title">
+			<h2 id="glance-title" class="glance-title">At a glance</h2>
+			<dl>
+				{glance.map((g) => (
+					<div class="glance-row">
+						<dt>{g.label}</dt>
+						<dd set:html={fact(g.value)} />
+					</div>
+				))}
+			</dl>
+		</section>
 	)}
 
 	<div class="prose">
@@ -151,6 +167,64 @@ const heroSrcset =
 		width: 100%;
 		border-radius: 1.25rem;
 		border: 1px solid var(--gray-800);
+	}
+
+	/* "At a glance" summary box */
+	.glance {
+		padding: 1.25rem 1.5rem 0.5rem;
+		border: 1px solid var(--gray-800);
+		border-radius: 1rem;
+		background: var(--gray-999);
+		box-shadow: var(--shadow-sm);
+	}
+
+	.glance-title {
+		margin: 0 0 0.25rem;
+		font-size: var(--text-sm);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		font-weight: 600;
+		color: var(--accent-regular);
+	}
+
+	.glance dl {
+		margin: 0;
+	}
+
+	.glance-row {
+		padding: 0.875rem 0;
+		border-top: 1px solid var(--gray-800);
+	}
+
+	.glance-row:first-child {
+		border-top: 0;
+	}
+
+	.glance dt {
+		font-size: 0.75rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		font-weight: 600;
+		color: var(--gray-400);
+	}
+
+	.glance dd {
+		margin: 0.25rem 0 0;
+		line-height: 1.5;
+		color: var(--gray-200);
+	}
+
+	@media (min-width: 40em) {
+		.glance-row {
+			display: grid;
+			grid-template-columns: 8.5rem 1fr;
+			gap: 1rem;
+			align-items: baseline;
+		}
+
+		.glance dd {
+			margin: 0;
+		}
 	}
 
 	/* Article body (rendered from Markdown) */

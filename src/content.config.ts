@@ -62,6 +62,8 @@ export const collections = {
 					timeline: z.string().optional(),
 					heroImg: z.string().optional(),
 					heroImg_alt: z.string().optional(),
+					// "At a glance" summary box shown after the hero image.
+					glance: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
 					cta: z
 						.object({
 							lead: z.string(),

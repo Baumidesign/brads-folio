@@ -28,6 +28,15 @@ longForm:
     table with text categories. Interim: a Model-Driven App form inside fixed
     platform layouts. Now: a custom web app showing a pressure gauge record
     that has passed, ready to issue a certificate.
+  glance:
+    - label: The path
+      value: Access database (10+ years) → Power Platform → custom web app
+    - label: Migrated
+      value: 1,600+ customer accounts · 10,000+ equipment records · 394 past worksheets
+    - label: Built
+      value: Instrument register, bench worksheets with automatic Pass/Fail, and certificates with a full audit trail
+    - label: Status
+      value: Rolling out December 2026
   cta:
     lead: Running your lab on spreadsheets or ageing software?
     body: I build calibration and compliance software that fits how your lab actually works.
