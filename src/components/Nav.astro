@@ -286,6 +286,7 @@ const iconLinks: { label: string; href: string; icon: keyof typeof iconPaths }[]
 			align-items: center;
 			/* Same container as .wrapper (global.css) so the logo and theme
 			   toggle line up with page content at every width */
+			width: 100%;
 			max-width: 83rem;
 			margin-inline: auto;
 			padding: 2.5rem 1.5rem;
@@ -376,6 +377,20 @@ const iconLinks: { label: string; href: string; icon: keyof typeof iconPaths }[]
 			display: flex;
 			justify-content: flex-end;
 			gap: 0;
+		}
+
+		/* Light pill so the icon stays readable over the darker part of the
+		   hero gradient (matches the theme toggle). */
+		.social {
+			border-radius: 999rem;
+			background-color: var(--gray-999);
+			box-shadow: inset 0 0 0 1px var(--accent-overlay);
+			color: var(--accent-regular);
+		}
+
+		.social:hover,
+		.social:focus {
+			color: var(--gray-0);
 		}
 	}
 	@media (forced-colors: active) {

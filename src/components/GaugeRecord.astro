@@ -89,6 +89,7 @@ const fmt = (n: number) => n.toFixed(1);
 						{
 							points.map((r) => (
 								<tr
+									class:list={{ adjusted: r.left != null }}
 									data-row
 									data-p={r.p}
 									data-found={r.found}
@@ -134,7 +135,7 @@ const fmt = (n: number) => n.toFixed(1);
 	</div>
 
 	<div class="under">
-		<span>Example record · illustrative data</span>
+		<span>Illustrative data</span>
 		<span class="actions">
 			<button type="button" class="replay" data-replay data-umami-event="gauge-replay">↻ Replay</button>
 			{href && <a href={href} data-umami-event="gauge-case-study">See the case study →</a>}
@@ -192,7 +193,7 @@ const fmt = (n: number) => n.toFixed(1);
 			rows.forEach((r) => {
 				r.dataset.f = 'pending';
 				r.dataset.l = 'pending';
-				r.classList.remove('fail');
+				r.classList.remove('fail', 'active');
 			});
 			setNeedle(0);
 			tol.setAttribute('d', '');
@@ -210,6 +211,7 @@ const fmt = (n: number) => n.toFixed(1);
 				const left = r.dataset.left ? +r.dataset.left : null;
 				const ok = r.dataset.ok === 'true';
 				at(t, () => {
+					rows.forEach((x) => x.classList.toggle('active', x === r));
 					tol.setAttribute('d', r.dataset.arc!);
 					setNeedle(found);
 				});
@@ -236,6 +238,7 @@ const fmt = (n: number) => n.toFixed(1);
 				t += 400;
 			});
 			at(t + 200, () => {
+				rows.forEach((x) => x.classList.remove('active'));
 				tol.setAttribute('d', '');
 				setStatus('pass', 'Adjusted · Pass as left');
 			});
@@ -493,6 +496,20 @@ const fmt = (n: number) => n.toFixed(1);
 
 	tr:last-child td {
 		border-bottom: 0;
+	}
+
+	/* The row being checked during the replay */
+	tr.active td {
+		background: var(--gray-900);
+	}
+
+	/* The adjusted point is the story of the record: accent it once its
+	   as-left reading is in. */
+	tr.adjusted[data-l='shown'] td {
+		background: color-mix(in srgb, var(--accent-regular) 9%, transparent);
+	}
+	tr.adjusted[data-l='shown'] td:first-child {
+		box-shadow: inset 3px 0 0 var(--accent-regular);
 	}
 
 	tr.fail td {

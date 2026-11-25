@@ -44,9 +44,16 @@ const projects = allProjects.filter((p) => p !== featured).slice(0, 3);
 					avatar="/assets/avatar.webp"
 					title="Software for Calibration & Compliance Businesses"
 					titleHtml="Software for Calibration <span class='force-break'>&amp; Compliance Businesses</span>"
-					tagline="I specialise in calibration and internal management systems, where data integrity and user experience both have to be right. I also take on custom web applications and freelance work."
+					tagline="I specialise in calibration and internal management systems, where data integrity and ease of use both matter. I also build custom web apps and websites, and help businesses move off ageing systems."
 					align="start"
 				>
+					<div class="hero-actions">
+						<a class="btn btn-primary" href="mailto:hi@bradbaumi.com.au" data-umami-event="contact-cta" data-umami-event-location="hero">
+							Start a Conversation
+							<Icon icon="paper-plane-tilt" size="1.1em" />
+						</a>
+						<a class="btn btn-secondary" href="/work/" data-umami-event="hero-work">View my work</a>
+					</div>
 					<p class="location">Based in Adelaide, South Australia · Working with clients in Australia and overseas</p>
 				</Hero>
 
@@ -108,6 +115,56 @@ const projects = allProjects.filter((p) => p !== featured).slice(0, 3);
 		gap: 2rem;
 	}
 
+	.hero-actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.75rem;
+		margin-top: 0.5rem;
+	}
+
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6em;
+		padding: 0.75rem 1.5rem;
+		border-radius: 999rem;
+		font-family: var(--font-brand);
+		font-size: var(--text-base);
+		font-weight: 500;
+		line-height: 1.1;
+		text-decoration: none;
+		white-space: nowrap;
+		transition:
+			box-shadow var(--theme-transition),
+			background-color var(--theme-transition);
+	}
+
+	.btn:focus-visible {
+		outline: 2px solid var(--accent-regular);
+		outline-offset: 3px;
+	}
+
+	.btn-primary {
+		color: var(--accent-text-over);
+		background: var(--gradient-accent-orange);
+		box-shadow: var(--shadow-md);
+	}
+
+	.btn-primary:hover {
+		box-shadow: var(--shadow-lg);
+	}
+
+	.btn-secondary {
+		color: var(--gray-0);
+		background-color: var(--gray-999);
+		box-shadow: inset 0 0 0 1px var(--gray-800);
+	}
+
+	.btn-secondary:hover {
+		background-color: var(--gray-900);
+	}
+
 	.location {
 		margin-top: 0.75rem;
 		font-size: var(--text-sm);
@@ -121,9 +178,12 @@ const projects = allProjects.filter((p) => p !== featured).slice(0, 3);
 		font-size: var(--text-2xl);
 	}
 
-	/* More air between eyebrow, headline and subhead on this page */
+	/* More air between eyebrow, headline and subhead on this page; one step
+	   smaller than Hero's default so the H1 leads and the buttons fit. */
 	.hero :global(.tagline) {
 		margin-top: 0.75rem;
+		font-size: var(--text-md);
+		color: var(--gray-200);
 	}
 
 	/* Natural wrapping on mobile — the forced break only kicks in at the
@@ -139,6 +199,15 @@ const projects = allProjects.filter((p) => p !== featured).slice(0, 3);
 
 		.hero :global(.force-break) {
 			display: block;
+		}
+
+		.hero :global(.tagline) {
+			font-size: var(--text-lg);
+			max-width: 40ch;
+		}
+
+		.hero-actions {
+			justify-content: flex-start;
 		}
 	}
 
