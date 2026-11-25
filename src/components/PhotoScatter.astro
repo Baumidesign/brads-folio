@@ -1,0 +1,256 @@
+---
+/**
+ * Scattered "prints on a table" photo pile (desktop) / swipe row (mobile).
+ * Click a photo to open it larger in a native <dialog>.
+ * Images are pre-sized, metadata-stripped WebP in /public/assets/about/.
+ */
+interface Photo {
+	name: string;
+	caption: string;
+	alt: string;
+	portrait?: boolean;
+}
+
+const photos: Photo[] = [
+	{ name: 'patagonia-valley', caption: 'Torres del Paine, Patagonia', alt: 'My wife and I with hiking packs in a mountain valley' },
+	{ name: 'patagonia-glacier', caption: 'Glacier lookout, Torres del Paine', alt: 'My wife and I with arms out at a lookout above a glacier lake', portrait: true },
+	{ name: 'giraffe', caption: 'Lunch with a giraffe, South Africa', alt: 'My wife and I at a lodge deck with a giraffe leaning in' },
+	{ name: 'singapore', caption: 'Marina Bay, Singapore', alt: 'My wife and I on the Marina Bay waterfront' },
+	{ name: 'beach-sunset', caption: 'Sunset, Adelaide', alt: 'My wife and I on a beach at sunset' },
+];
+
+const src = (name: string, w: number) => `/assets/about/${name}-${w}.webp`;
+---
+
+<ul class="scatter" role="list">
+	{
+		photos.map((p, i) => (
+			<li class:list={['print', `p${i + 1}`, { portrait: p.portrait }]}>
+				<button
+					type="button"
+					class="print-button"
+					data-full={src(p.name, 1200)}
+					data-alt={p.alt}
+					data-caption={p.caption}
+					aria-label={`View larger: ${p.caption}`}
+				>
+					<img
+						src={src(p.name, 480)}
+						srcset={`${src(p.name, 480)} 480w, ${src(p.name, 1200)} 1200w`}
+						sizes="(min-width: 50em) 18rem, 70vw"
+						width={p.portrait ? 360 : 480}
+						height={p.portrait ? 480 : 360}
+						alt={p.alt}
+						loading="lazy"
+						decoding="async"
+					/>
+					<span class="caption">{p.caption}</span>
+				</button>
+			</li>
+		))
+	}
+</ul>
+
+<dialog class="lightbox" aria-label="Photo">
+	<figure>
+		<img class="lightbox-img" src="" alt="" />
+		<figcaption class="lightbox-caption"></figcaption>
+	</figure>
+	<button type="button" class="lightbox-close" aria-label="Close"><span aria-hidden="true">×</span></button>
+</dialog>
+
+<script>
+	const dialog = document.querySelector<HTMLDialogElement>('.lightbox');
+	const img = dialog?.querySelector<HTMLImageElement>('.lightbox-img');
+	const caption = dialog?.querySelector<HTMLElement>('.lightbox-caption');
+
+	if (dialog && img && caption) {
+		document.querySelectorAll<HTMLButtonElement>('.print-button').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				img.src = btn.dataset.full ?? '';
+				img.alt = btn.dataset.alt ?? '';
+				caption.textContent = btn.dataset.caption ?? '';
+				dialog.showModal();
+			});
+		});
+		dialog.querySelector('.lightbox-close')?.addEventListener('click', () => dialog.close());
+		// Close when clicking the backdrop (outside the figure).
+		dialog.addEventListener('click', (e) => {
+			if (e.target === dialog) dialog.close();
+		});
+	}
+</script>
+
+<style>
+	/* ---------- Mobile: swipe row ---------- */
+	.scatter {
+		list-style: none;
+		margin: 1rem 0 0;
+		padding: 0.5rem 0 1rem;
+		display: flex;
+		align-items: flex-start;
+		gap: 1rem;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		scrollbar-width: thin;
+	}
+
+	.print {
+		flex: 0 0 70%;
+		scroll-snap-align: center;
+	}
+
+	.print.portrait {
+		flex-basis: 55%;
+	}
+
+	.print-button {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.5rem 0.5rem 0.625rem;
+		border: 0;
+		border-radius: 0.375rem;
+		/* Printed-photo frame: deliberately the same in light and dark mode. */
+		background: #ffffff;
+		color: #3d4663;
+		box-shadow: var(--shadow-md);
+		cursor: zoom-in;
+		font: inherit;
+		text-align: left;
+	}
+
+	.print-button img {
+		display: block;
+		width: 100%;
+		height: auto;
+		border-radius: 0.125rem;
+	}
+
+	.caption {
+		font-size: var(--text-sm);
+		line-height: 1.3;
+	}
+
+	.print-button:focus-visible {
+		outline: 2px solid var(--accent-regular);
+		outline-offset: 3px;
+	}
+
+	/* ---------- Desktop: scattered pile ---------- */
+	@media (min-width: 50em) {
+		.scatter {
+			position: relative;
+			display: block;
+			overflow: visible;
+			aspect-ratio: 16 / 11.5;
+			margin-top: 1.5rem;
+			padding: 0;
+		}
+
+		.print {
+			position: absolute;
+			width: 38%;
+			left: var(--x);
+			top: var(--y);
+			transform: rotate(var(--r));
+			transition:
+				transform 0.25s ease,
+				box-shadow 0.25s ease;
+			z-index: var(--z, 1);
+		}
+
+		.print.portrait {
+			width: 26%;
+		}
+
+		/* Top row: 3 prints; bottom row: 2 prints. */
+		.p1 { --x: 0%;  --y: 4%;  --r: -4deg; --z: 2; }
+		.p2 { --x: 37%; --y: 0%;  --r: 3deg;  --z: 3; }
+		.p3 { --x: 62%; --y: 6%;  --r: -2deg; --z: 2; }
+		.p4 { --x: 8%;  --y: 52%; --r: 3deg;  --z: 4; }
+		.p5 { --x: 48%; --y: 56%; --r: -3deg; --z: 5; }
+
+		.print:hover,
+		.print:focus-within {
+			transform: rotate(0deg) scale(1.05);
+			z-index: 10;
+		}
+
+		.print:hover .print-button,
+		.print:focus-within .print-button {
+			box-shadow: var(--shadow-lg);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.print {
+			transition: none;
+		}
+	}
+
+	/* ---------- Lightbox ---------- */
+	.lightbox {
+		/* The global reset zeroes margins, which removes the browser's dialog centring. */
+		margin: auto;
+		max-width: min(92vw, 60rem);
+		max-height: 92vh;
+		padding: 0;
+		border: 0;
+		border-radius: 0.5rem;
+		background: #ffffff;
+		color: #3d4663;
+		overflow: hidden;
+	}
+
+	.lightbox::backdrop {
+		background: rgba(9, 11, 17, 0.8);
+	}
+
+	.lightbox figure {
+		margin: 0;
+		padding: 0.75rem 0.75rem 0.875rem;
+	}
+
+	.lightbox-img {
+		display: block;
+		max-width: 100%;
+		max-height: calc(92vh - 5.5rem);
+		width: auto;
+		height: auto;
+		margin: 0 auto;
+		border-radius: 0.25rem;
+	}
+
+	.lightbox-caption {
+		margin-top: 0.625rem;
+		font-size: var(--text-base);
+	}
+
+	.lightbox-close {
+		position: absolute;
+		/* Inside the frame, over the photo's corner, so it can never be clipped. */
+		top: 1.25rem;
+		right: 1.25rem;
+		width: 2.25rem;
+		height: 2.25rem;
+		border: 0;
+		border-radius: 50%;
+		background: rgba(9, 11, 17, 0.65);
+		color: #ffffff;
+		font-size: 1.5rem;
+		line-height: 1;
+		cursor: pointer;
+		box-shadow: var(--shadow-md);
+	}
+
+	.lightbox-close:focus-visible {
+		outline: 2px solid #ffffff;
+		outline-offset: 2px;
+	}
+
+	.lightbox-close:hover {
+		background: rgba(9, 11, 17, 0.85);
+	}
+</style>

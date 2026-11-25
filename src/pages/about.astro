@@ -3,6 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 import ContactCTA from "../components/ContactCTA.astro";
 import Hero from "../components/Hero.astro";
+import PhotoScatter from "../components/PhotoScatter.astro";
 import { graph, person } from "../lib/seo";
 ---
 
@@ -27,14 +28,67 @@ import { graph, person } from "../lib/seo";
       </Hero>
 
       <section>
-        <h2 class="section-title">Welcome</h2>
+        <h2 class="section-title">Hi, I'm Brad</h2>
         <div class="content">
           <p>
-            I currently work at a calibration company, where I designed and built the organisation's IT systems — a
-            Power Platform backend, custom PCF tooling, and the workflows that run their calibration and compliance
-            processes. I'm currently rebuilding that system from the ground up — commissioned by my employer —
-            using React, PostgreSQL, and TypeScript.
+            I'm a developer based in Adelaide. I build software for calibration labs and compliance-driven businesses:
+            the systems behind instrument records, bench worksheets and certificates. Alongside that, I take on custom
+            web applications and websites for clients across Australia and overseas.
           </p>
+        </div>
+      </section>
+      <section>
+        <h2 class="section-title">How I can help</h2>
+        <div class="content">
+          <p>
+            <b>Calibration lab experience</b>
+            <br />
+            I work inside a NATA-accredited calibration lab, so I know the workflows first-hand and you won't have to
+            explain them from scratch.
+          </p>
+          <br />
+          <p>
+            <b>Compliance processes</b>
+            <br />
+            I understand the ISO/IEC 17025 processes your records need to support, like audit trails, traceability and
+            controlled changes.
+          </p>
+          <br />
+          <p>
+            <b>Database design</b>
+            <br />
+            Records that stay structured and consistent as they grow.
+          </p>
+          <br />
+          <p>
+            <b>UX design</b>
+            <br />
+            Software that's easier to learn and quicker to use for the people entering data every day.
+          </p>
+          <br />
+          <p>
+            <b>Full-stack development</b>
+            <br />
+            One person responsible for the whole system, from the database to the screen.
+          </p>
+          <br />
+          <p>
+            If you're working around an ageing system or a pile of spreadsheets, get in touch at
+            <a href="mailto:hi@bradbaumi.com.au" data-umami-event="email-link" data-umami-event-location="about">hi@bradbaumi.com.au</a>
+            or on
+            <a href="https://www.linkedin.com/in/bradley-baumann-7069b231/" target="_blank" data-umami-event="linkedin" data-umami-event-location="about">LinkedIn</a>.
+          </p>
+        </div>
+      </section>
+      <section>
+        <h2 class="section-title">Background</h2>
+        <div class="content">
+          <p>
+            I work at a calibration company, where I moved the lab off a 10-year-old Access database onto Power
+            Platform. I'm now rebuilding it as a custom web app, commissioned by my employer.
+            <a href="/work/calibration-software/" data-umami-event="about-case-study">Read the case study →</a>
+          </p>
+
           <br />
           <p>
             Before that, I was a UX Designer at <a href="https://www.jw.org" target="_blank">JW.ORG</a>, working
@@ -44,11 +98,19 @@ import { graph, person } from "../lib/seo";
           </p>
           <br />
           <p>
-            Alongside my current work, I take on freelance development projects—from custom web applications to
-            high-performance marketing and e-commerce sites. If you have a project in mind, feel free to reach out
-            via hi@bradbaumi.com.au or
-            <a href="https://www.linkedin.com/in/bradley-baumann-7069b231/" target="_blank" data-umami-event="linkedin" data-umami-event-location="about">LinkedIn</a>.
+            Since 2015 I've run my own freelance web business, building and looking after websites for clients
+            in Australia and South Africa.
           </p>
+        </div>
+      </section>
+      <section>
+        <h2 class="section-title">Outside work</h2>
+        <div class="content">
+          <p>
+            When I'm not at a keyboard, my wife and I are usually planning the next overnight hike or trip away. A few
+            favourites:
+          </p>
+          <PhotoScatter />
         </div>
       </section>
       <section>

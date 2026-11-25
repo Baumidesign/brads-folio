@@ -19,6 +19,6 @@ export const formatDate = (d: Date) =>
 export const blogCta = {
 	lead: 'Running your lab on spreadsheets or ageing software?',
 	body: 'I build calibration and compliance software that fits how your lab actually works.',
-	label: 'Book a chat',
+	label: 'Start a Conversation',
 	href: 'mailto:hi@bradbaumi.com.au',
 };
