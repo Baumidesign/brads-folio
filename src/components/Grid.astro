@@ -1,12 +1,12 @@
 ---
 interface Props {
-	variant?: 'offset' | 'small';
+	variant?: 'offset' | 'small' | 'trio';
 }
 
 const { variant } = Astro.props;
 ---
 
-<ul class:list={['grid', { offset: variant === 'offset', small: variant === 'small' }]}>
+<ul class:list={['grid', { offset: variant === 'offset', small: variant === 'small', trio: variant === 'trio' }]}>
 	<slot />
 </ul>
 
@@ -49,6 +49,17 @@ const { variant } = Astro.props;
 		.grid.offset > :global(:last-child:nth-child(odd)) {
 			grid-column: 2 / 3;
 			transform: none;
+		}
+
+		/* Three across in an even row. */
+		.grid.trio {
+			grid-template-columns: repeat(3, 1fr);
+			gap: 2rem;
+		}
+
+		/* Narrower columns, so a shorter image keeps the cards in proportion. */
+		.grid.trio :global(.card) {
+			grid-template-rows: 13.5rem auto;
 		}
 
 		.grid.small {

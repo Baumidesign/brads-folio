@@ -11,6 +11,7 @@ const HAS_VARIANTS = new Set([
 	'/assets/calibration.jpg',
 	'/assets/charnwoodsa.jpg',
 	'/assets/case-study-worksheet.webp',
+	'/assets/calibration-software/eras.webp',
 ]);
 
 export function responsiveImg(src: string): { src: string; srcset?: string } {

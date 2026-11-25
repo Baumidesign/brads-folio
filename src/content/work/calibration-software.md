@@ -10,6 +10,12 @@ techStack:
   - React
   - TypeScript
   - PostgreSQL
+featured: true
+highlights:
+  - 1,600+ customer accounts and 10,000+ equipment records migrated
+  - Bench worksheets with automatic Pass/Fail
+  - Certificates with a full audit trail
+  - Rolling out December 2026
 tags:
   - Systems Design
   - UX

@@ -5,12 +5,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 import ContactCTA from '../components/ContactCTA.astro';
 import PortfolioPreview from '../components/PortfolioPreview.astro';
+import FeaturedProject from '../components/FeaturedProject.astro';
 import Hero from '../components/Hero.astro';
 import Grid from '../components/Grid.astro';
 
 const projects = (await getCollection('work', (e) => !e.data.draft)).sort(
 	(a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
 );
+// The first `featured` project gets a full-width card; the rest stay in the grid.
+const featured = projects.find((p) => p.data.featured);
+const rest = projects.filter((p) => p !== featured);
 ---
 
 <BaseLayout
@@ -24,9 +28,10 @@ const projects = (await getCollection('work', (e) => !e.data.draft)).sort(
 				tagline="See my most recent projects below to get an idea of my past experience."
 				align="start"
 			/>
+			{featured && <FeaturedProject project={featured} />}
 			<Grid variant="offset">
 				{
-					projects.map((project) => (
+					rest.map((project) => (
 						<li>
 							<PortfolioPreview project={project} />
 						</li>

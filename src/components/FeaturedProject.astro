@@ -1,0 +1,244 @@
+---
+// Full-width card for the featured project at the top of the Work page:
+// wide image, one-line summary, a few highlights and a case-study link.
+import type { CollectionEntry } from 'astro:content';
+import { responsiveImg } from '../lib/images';
+
+interface Props {
+	project: CollectionEntry<'work'>;
+	// Lazy-load the image when the card sits below the fold (e.g. the homepage).
+	lazy?: boolean;
+	// Heading level for the title, to fit the page outline (h2 on Work, h4 on home).
+	headingLevel?: 2 | 3 | 4;
+	// Side-by-side layout (image left, text right) for tighter spots like the homepage.
+	compact?: boolean;
+}
+
+const { project, lazy = false, headingLevel = 2, compact = false } = Astro.props;
+const Heading = `h${headingLevel}` as 'h2' | 'h3' | 'h4';
+const { data, id: slug } = project;
+
+// Prefer the long-form hero (e.g. the three-eras graphic); fall back to the card image.
+// (No filesystem checks here: these pages render on the server, where public/ isn't on disk.)
+const image = data.longForm?.heroImg
+	? { ...responsiveImg(data.longForm.heroImg), alt: data.longForm.heroImg_alt ?? '' }
+	: { ...responsiveImg(data.img), alt: data.img_alt ?? '' };
+
+const summary = data.longForm?.lede ?? data.description;
+const highlights = data.highlights ?? [];
+---
+
+<a
+	class:list={['featured', { compact }]}
+	href={`/work/${slug}/`}
+	data-umami-event="project-card"
+	data-umami-event-project={slug}
+	data-umami-event-featured="true"
+>
+	<img
+		class="featured-img"
+		src={image.src}
+		srcset={image.srcset}
+		sizes={compact ? '(min-width: 50em) 40rem, 100vw' : '(min-width: 83rem) 80rem, 100vw'}
+		alt={image.alt}
+		loading={lazy ? 'lazy' : undefined}
+		decoding="async"
+	/>
+	<div class="body">
+		<div class="intro">
+			<p class="eyebrow">Featured project</p>
+			<Heading class="title">{data.title}</Heading>
+			<p class="summary">{summary}</p>
+			{data.tags.length > 0 && <p class="tags">{data.tags.join(' · ')}</p>}
+			<span class="cta">
+				Read the case study <span class="arrow" aria-hidden="true">→</span>
+			</span>
+		</div>
+		{
+			highlights.length > 0 && (
+				<ul class="highlights">
+					{highlights.map((h) => (
+						<li>{h}</li>
+					))}
+				</ul>
+			)
+		}
+	</div>
+</a>
+
+<style>
+	.featured {
+		display: flex;
+		flex-direction: column;
+		background: var(--gray-999);
+		border: 1px solid var(--gray-800);
+		border-radius: 0.75rem;
+		overflow: hidden;
+		box-shadow: var(--shadow-sm);
+		text-decoration: none;
+		transition: box-shadow var(--theme-transition);
+	}
+
+	.featured:hover {
+		box-shadow: var(--shadow-md);
+	}
+
+	.featured:focus-visible {
+		outline: 2px solid var(--accent-regular);
+		outline-offset: 3px;
+	}
+
+	.featured-img {
+		display: block;
+		width: 100%;
+		height: auto;
+		border-bottom: 1px solid var(--gray-800);
+		background: var(--gradient-subtle);
+	}
+
+	.body {
+		display: grid;
+		gap: 1.5rem;
+		padding: 1.25rem 1.25rem 1.5rem;
+	}
+
+	.intro {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.eyebrow {
+		margin: 0;
+		font-size: var(--text-sm);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		font-weight: 600;
+		color: var(--accent-regular);
+	}
+
+	.title {
+		margin: 0;
+		font-family: var(--font-brand);
+		font-size: var(--text-2xl);
+		font-weight: 600;
+		line-height: 1.1;
+		color: var(--gray-0);
+	}
+
+	.summary {
+		margin: 0;
+		font-size: var(--text-md);
+		line-height: 1.5;
+		color: var(--gray-200);
+	}
+
+	.tags {
+		margin: 0;
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+	}
+
+	.cta {
+		margin-top: 0.5rem;
+		font-family: var(--font-brand);
+		font-weight: 500;
+		color: var(--accent-regular);
+	}
+
+	.arrow {
+		display: inline-block;
+		transition: transform 0.2s ease;
+	}
+
+	.featured:hover .arrow {
+		transform: translateX(4px);
+	}
+
+	.highlights {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		display: grid;
+		gap: 0.75rem;
+		align-content: start;
+	}
+
+	.highlights li {
+		position: relative;
+		padding-left: 1.5rem;
+		line-height: 1.45;
+		color: var(--gray-200);
+	}
+
+	.highlights li::before {
+		content: '✓';
+		position: absolute;
+		left: 0;
+		font-weight: 700;
+		color: var(--accent-regular);
+	}
+
+	@media (min-width: 50em) {
+		.featured {
+			border-radius: 1.5rem;
+		}
+
+		.body {
+			grid-template-columns: 1.2fr 1fr;
+			gap: 3rem;
+			padding: 2rem 2.25rem 2.25rem;
+		}
+
+		.highlights {
+			padding-left: 2rem;
+			border-left: 1px solid var(--gray-800);
+		}
+	}
+
+	/* Compact: image and text side by side on desktop, one text column. */
+	@media (min-width: 50em) {
+		.compact {
+			display: grid;
+			grid-template-columns: 1.35fr 1fr;
+			align-items: stretch;
+		}
+
+		.compact .featured-img {
+			height: 100%;
+			/* Show the whole graphic; the background matches its light edges. */
+			object-fit: contain;
+			background: linear-gradient(135deg, #eef0f6, #fafbfd);
+			border-bottom: 0;
+			border-right: 1px solid var(--gray-800);
+		}
+
+		.compact .body {
+			grid-template-columns: 1fr;
+			gap: 1.25rem;
+			padding: 1.75rem 2rem;
+			align-content: center;
+		}
+
+		.compact .title {
+			font-size: var(--text-xl);
+		}
+
+		.compact .summary {
+			font-size: var(--text-base);
+		}
+
+		.compact .highlights {
+			padding-left: 0;
+			border-left: 0;
+			gap: 0.5rem;
+			font-size: var(--text-sm);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.arrow {
+			transition: none;
+		}
+	}
+</style>

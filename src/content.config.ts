@@ -39,6 +39,8 @@ export const collections = {
 			// Lets the homepage curate specific case studies later instead of
 			// always showing the 4 most recent by publishDate.
 			featured: z.boolean().optional(),
+			// Short bullet points shown on the featured Work page card.
+			highlights: z.array(z.string()).optional(),
 
 			// Draft entries are only built in dev (reachable by URL), never
 			// listed on the homepage or Work page, and always noindexed.
