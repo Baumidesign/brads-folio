@@ -11,6 +11,7 @@ import Pill from '../../components/Pill.astro';
 import CaseStudyStory from '../../components/CaseStudyStory.astro';
 import CaseStudyLongForm from '../../components/CaseStudyLongForm.astro';
 import { absUrl, graph, person } from '../../lib/seo';
+import { responsiveImg } from '../../lib/images';
 
 const contextNote: Record<'owned-product' | 'employer-experience', string> = {
 	'owned-product':
@@ -113,7 +114,7 @@ const jsonLd = entry.data.longForm
 					{entry.data.caseStudyType && entry.data.caseStudyType !== 'client-site' && (
 						<p class="context-note">{contextNote[entry.data.caseStudyType]}</p>
 					)}
-					{entry.data.img && <img src={entry.data.img} alt={entry.data.img_alt || ''} />}
+					{entry.data.img && <img {...responsiveImg(entry.data.img)} sizes="(min-width: 50em) 60rem, 100vw" alt={entry.data.img_alt || ''} />}
 					<div class="content">
 						<Content />
 					</div>

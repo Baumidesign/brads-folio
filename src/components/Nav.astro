@@ -304,6 +304,19 @@ const iconLinks: { label: string; href: string; icon: keyof typeof iconPaths }[]
 			display: contents;
 		}
 
+		/* Show the links from the first paint on desktop. Without this, #menu-content
+		   stays [hidden] until the menu script adds .menu-content, and the nav pill
+		   popping in pushed the hero down (CLS ~0.12 on desktop). Author CSS beats
+		   the UA [hidden] rule. */
+		#menu-content {
+			display: contents;
+		}
+
+		/* The no-JS copies would duplicate the links now that they show without JS. */
+		noscript {
+			display: none;
+		}
+
 		.nav-items {
 			position: relative;
 			flex-direction: row;

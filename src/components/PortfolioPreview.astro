@@ -1,15 +1,24 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import { responsiveImg } from '../lib/images';
 
 interface Props {
 	project: CollectionEntry<'work'>;
 }
 
 const { data, id: slug } = Astro.props.project;
+const image = responsiveImg(data.img);
 ---
 
 <a class="card" href={`/work/${slug}/`} data-umami-event="project-card" data-umami-event-project={slug}>
-	<img src={data.img} alt={data.img_alt || ''} loading="lazy" decoding="async" />
+	<img
+		src={image.src}
+		srcset={image.srcset}
+		sizes="(min-width: 50em) 40rem, 100vw"
+		alt={data.img_alt || ''}
+		loading="lazy"
+		decoding="async"
+	/>
 	<span class="caption">
 		<span class="text">
 			<span class="title">{data.title}</span>
